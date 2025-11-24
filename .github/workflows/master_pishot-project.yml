@@ -29,6 +29,11 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release ./PiShotWebApi/PiShotWebApi.csproj
 
+
+    - name: Run Unit Tests
+      run: dotnet test ./TestPiShot/TestPiShot.csproj --configuration Release --no-build
+
+
     - name: Publish
       run: dotnet publish ./PiShotWebApi/PiShotWebApi.csproj -c Release -o published
 
