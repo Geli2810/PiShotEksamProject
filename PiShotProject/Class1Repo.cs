@@ -16,6 +16,11 @@ namespace PiShotProject
                 new Class1(2020, 5, 15),
                 new Class1(2021, 6, 20),
                 new Class1(2022, 7, 25),
+                new Class1(2023, 8, 30), 
+                new Class1(2024, 9, 10), 
+                new Class1(2025, 10, 15),
+                new Class1(2026, 11, 20),
+                new Class1(2027, 12, 25)
 
 
             };
