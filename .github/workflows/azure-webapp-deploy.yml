@@ -1,0 +1,35 @@
+name: Build and Deploy .NET API to Azure
+
+on:
+  push:
+    branches: 
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore ./PiShotWebApi/PiShotWebApi.csproj
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release ./PiShotWebApi/PiShotWebApi.csproj
+
+    - name: Publish
+      run: dotnet publish -c Release -o published ./PiShotWebApi/PiShotWebApi.csproj
+
+    - name: Deploy to Azure WebApp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: pishot-project
+        package: published
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISH_PROFILE }}
