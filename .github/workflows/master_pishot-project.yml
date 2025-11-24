@@ -16,10 +16,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
@@ -33,7 +33,7 @@ jobs:
       run: dotnet publish ./PiShotWebApi/PiShotWebApi.csproj -c Release -o published
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: webapi
         path: published
@@ -44,9 +44,10 @@ jobs:
 
     steps:
     - name: Download artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: webapi
+        path: webapi
 
     - name: Login to Azure with OIDC
       uses: azure/login@v2
@@ -56,8 +57,8 @@ jobs:
         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CB4A793B90E348329A494CAAD99E8CDE }}
 
     - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
+      uses: azure/webapps-deploy@v3
       with:
         app-name: 'pishot-project'
         slot-name: 'Production'
-        package: ./webapi
+        package: webapi
