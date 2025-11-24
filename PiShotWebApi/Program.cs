@@ -24,8 +24,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Disable HTTPS redirection for Azure
-// app.UseHttpsRedirection();
+
 
 
 app.UseCors("AllowAll");
