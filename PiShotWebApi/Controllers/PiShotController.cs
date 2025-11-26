@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PiShotProject;
+using PiShotProject.ClassDB;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -9,17 +10,18 @@ namespace PiShotWebApi.Controllers
     [ApiController]
     public class PiShotController : ControllerBase
     {
-        private Class1Repo _class1Repo;
-        public PiShotController(Class1Repo class1Repo)
+        private PiShotDBRepo _context;
+        public PiShotController(PiShotDBRepo dBContext)
         {
-            _class1Repo = class1Repo;
+            _context = dBContext;
+
             
         }
         // GET: api/<PiShotController>
         [HttpGet]
         public IEnumerable<Class1> Get()
         {
-            return _class1Repo.GetAll();
+            return _context.GetAll();
         }
 
         // GET api/<PiShotController>/5

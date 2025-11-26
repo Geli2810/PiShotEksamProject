@@ -1,4 +1,5 @@
 using PiShotProject;
+using PiShotProject.ClassDB;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,9 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSingleton<Class1Repo>();
+
+builder.Services.AddSingleton<PiShotDBRepo>();
+
 
 var app = builder.Build();
 

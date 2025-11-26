@@ -2,18 +2,26 @@
 {
     public class Class1
     {
+        private int _id;
         private int _year;
         private int _month;
         private int _day;
 
-        public Class1(int year, int month, int day)
+        public Class1(int id,int year, int month, int day)
         {
-            _year = year;
-            _month = month;
-            _day = day;
+            Year = year;
+            Month = month;
+            Day = day;
+            Id = id;
         }
 
         public Class1() { }
+
+        public int Id
+        {
+            get { return _id; }
+            set { _id = value; }
+        }
 
         public int Year
         {
