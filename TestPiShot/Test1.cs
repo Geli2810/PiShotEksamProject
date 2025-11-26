@@ -41,7 +41,7 @@ namespace TestPiShot
         public void TestMethod3()
         {
             Class1Repo repo = new Class1Repo();
-            Class1 class1 = new Class1(2022, 12, 31);
+            Class1 class1 = new Class1(1,2022, 12, 31);
             repo.Add(class1);
         }
 

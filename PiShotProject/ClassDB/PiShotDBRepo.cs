@@ -13,7 +13,7 @@ namespace PiShotProject.ClassDB
         public PiShotDBRepo() 
         {
             var optionbuilder = new DbContextOptionsBuilder<PiShotDBContext>();
-            optionbuilder.UseSqlServer(CSPiShot.PiShotDBContext);
+            optionbuilder.UseSqlServer(CSPiShot.ConnectionString);
             _context = new PiShotDBContext(optionbuilder.Options);
 
         }
