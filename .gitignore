@@ -9,6 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+PiShotProject/ClassDB/CSPiShot.cs
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
