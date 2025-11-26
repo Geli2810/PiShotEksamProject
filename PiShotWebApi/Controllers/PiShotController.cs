@@ -31,7 +31,6 @@ namespace PiShotWebApi.Controllers
             return "value";
         }
 
-        // POST api/<PiShotController>
         [HttpPost]
         public void Post([FromBody] string value)
         {
