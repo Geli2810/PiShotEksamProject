@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using PiShotProject;
 using PiShotProject.ClassDB;
 
@@ -18,9 +19,15 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.AddSingleton<Class1Repo>();
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<PiShotDBContext>(options => options.UseSqlServer(connectionString));
 
-builder.Services.AddSingleton<PiShotDBRepo>();
+
+
+
+
+
+builder.Services.AddScoped<PiShotDBRepo>();
 
 
 var app = builder.Build();

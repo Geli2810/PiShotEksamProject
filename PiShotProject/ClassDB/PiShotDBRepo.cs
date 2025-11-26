@@ -10,12 +10,9 @@ namespace PiShotProject.ClassDB
     public class PiShotDBRepo
     {
         private PiShotDBContext _context;
-        public PiShotDBRepo() 
+        public PiShotDBRepo(PiShotDBContext context) 
         {
-            var optionbuilder = new DbContextOptionsBuilder<PiShotDBContext>();
-            optionbuilder.UseSqlServer(CSPiShot.ConnectionString);
-            _context = new PiShotDBContext(optionbuilder.Options);
-
+            _context = context;
         }
 
         public List<Class1> GetAll()
