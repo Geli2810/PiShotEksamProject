@@ -5,6 +5,7 @@
         private int _year;
         private int _month;
         private int _day;
+        private string _test;
 
         public Class1(int year, int month, int day)
         {
