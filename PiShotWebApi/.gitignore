@@ -11,6 +11,8 @@
 *.sln.docstates
 PiShotProject/ClassDB/CSPiShot.cs
 appsettings.json
+Secrets.json
+
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
