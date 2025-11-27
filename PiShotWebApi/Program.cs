@@ -4,6 +4,7 @@ using PiShotProject.ClassDB;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -22,21 +23,13 @@ builder.Services.AddCors(options =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<PiShotDBContext>(options => options.UseSqlServer(connectionString));
 
-
-
-
-
-
 builder.Services.AddScoped<PiShotDBRepo>();
-
 
 var app = builder.Build();
 
 app.UseSwagger();
+
 app.UseSwaggerUI();
-
-
-
 
 app.UseCors("AllowAll");
 
