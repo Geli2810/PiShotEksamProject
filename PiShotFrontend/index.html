@@ -1,2 +1,70 @@
 <!DOCTYPE html>
-<h1>Hello World!</h1>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Basketball Scoreboard</title>
+    
+    <!-- Link to your separate CSS file -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Load Vue.js directly from the internet -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+
+    <div id="app" v-cloak>
+        <!-- HEADER -->
+        <header>
+            <div class="live-badge">● LIVE</div>
+            <h1>ARENA SCOREBOARD</h1>
+        </header>
+
+        <!-- CONNECTION STATUS -->
+        <div class="status-bar" :class="connectionStatus">
+            System Status: {{ connectionStatus }}
+        </div>
+
+        <!-- LOADING SPINNER -->
+        <div v-if="loading" class="loading-msg">
+            Connecting to Stadium...
+        </div>
+
+        <!-- MAIN GAME AREA -->
+        <div v-else class="game-board">
+            
+            <!-- WINNER OVERLAY -->
+            <div v-if="winner" class="winner-overlay">
+                <div class="trophy">🏆</div>
+                <h1>{{ winner }} WINS!</h1>
+                <p>Please reset game on terminal</p>
+            </div>
+
+            <!-- SCORE CARDS -->
+            <div class="players-container">
+                
+                <!-- This loop creates a card for every player found in the database -->
+                <div 
+                    v-for="(player, index) in players" 
+                    :key="index" 
+                    class="player-card"
+                    :class="{ 'leader': isLeader(player) }"
+                >
+                    <div class="player-name">{{ player.name }}</div>
+                    <div class="player-score">{{ player.score }}</div>
+                    <div class="player-rank" v-if="isLeader(player)">LEADER</div>
+                </div>
+
+                <!-- Empty State -->
+                <div v-if="players.length === 0" class="waiting-msg">
+                    Waiting for game data...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to your separate JS file -->
+    <script src="index.js"></script>
+
+</body>
+</html>

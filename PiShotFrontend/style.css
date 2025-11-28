@@ -1,0 +1,127 @@
+/* GLOBAL RESET & FONTS */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #121212;
+    color: white;
+    font-family: 'Arial Black', 'Impact', sans-serif;
+    text-align: center;
+}
+
+/* Hide Vue templates before they compile */
+[v-cloak] { display: none; }
+
+/* HEADER */
+header {
+    padding: 20px;
+    background: #1e1e1e;
+    border-bottom: 2px solid #333;
+    margin-bottom: 20px;
+}
+
+h1 {
+    margin: 5px 0;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #f0f0f0;
+}
+
+.live-badge {
+    color: #ff4444;
+    font-size: 0.9rem;
+    animation: blink 1.5s infinite;
+}
+
+/* STATUS BAR */
+.status-bar {
+    font-family: monospace;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    color: #555;
+}
+.status-bar.Connected { color: #00ff00; }
+.status-bar.Error { color: #ff4444; }
+
+/* LOADING */
+.loading-msg {
+    font-size: 1.5rem;
+    color: #777;
+    margin-top: 50px;
+}
+
+/* PLAYER CARDS CONTAINER */
+.players-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    padding: 20px;
+}
+
+/* INDIVIDUAL PLAYER CARD */
+.player-card {
+    background: #1e1e1e;
+    width: 300px;
+    padding: 40px 20px;
+    border-radius: 15px;
+    border: 3px solid #333;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Leader Styling (Gold Glow) */
+.player-card.leader {
+    border-color: #ffd700;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+    transform: scale(1.05);
+    z-index: 10;
+}
+
+.player-name {
+    font-size: 2rem;
+    color: #aaa;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.player-score {
+    font-size: 7rem;
+    color: white;
+    line-height: 1;
+}
+
+.player-rank {
+    margin-top: 15px;
+    color: #ffd700;
+    font-size: 1rem;
+    letter-spacing: 2px;
+}
+
+/* WINNER OVERLAY */
+.winner-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    animation: fadeIn 0.5s;
+}
+
+.winner-overlay h1 {
+    font-size: 5rem;
+    color: #ffd700;
+    text-shadow: 0 0 20px #ffd700;
+}
+
+.trophy {
+    font-size: 6rem;
+    margin-bottom: 20px;
+}
+
+/* ANIMATIONS */
+@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
