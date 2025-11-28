@@ -11,12 +11,12 @@ namespace PiShotWebApi.Controllers
     public class PiShotController : ControllerBase
     {
         private PiShotDBRepo _context;
+
         public PiShotController(PiShotDBRepo dBContext)
         {
             _context = dBContext;
-
-            
         }
+
         // GET: api/<PiShotController>
         [HttpGet]
         public IEnumerable<Class1> Get()
