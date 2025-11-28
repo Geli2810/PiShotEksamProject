@@ -21,26 +21,36 @@ namespace PiShotProject
         public Profile() : this("Default Name", "default/path/to/image.png") { }
 
         public int Id
-        {
-            get { return _id; }
-        }
+        { get; set; }
 
         public string Name
         {
             get { return _name; }
             set 
             {
-                if (_name == null)
+                if (string.IsNullOrWhiteSpace(value))
                 {
-                    throw new ArgumentNullException("Name cannot be null");
+                    throw new ArgumentException("Name cannot be null or whitespace");
+                }
+                if (value.Length < 2 || value.Length > 50)
+                {
+                    throw new ArgumentOutOfRangeException("Name must be between 2 and 50 characters");
                 }
                 _name = value; 
+
             }
         }
         public string ProfileImagePath
         {
             get { return _profileImagePath; }
-            set { _profileImagePath = value; }
+            set 
+            { 
+                if(string.IsNullOrEmpty(value))
+                {
+                    throw new ArgumentException("Profile image path cannot be null or empty");
+                }
+                _profileImagePath = value; 
+            }
         }
 
         public override string ToString()
