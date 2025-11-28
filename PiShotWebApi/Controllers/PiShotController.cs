@@ -14,8 +14,6 @@ namespace PiShotWebApi.Controllers
         public PiShotController(PiShotDBRepo dBContext)
         {
             _context = dBContext;
-
-            
         }
         // GET: api/<PiShotController>
         [HttpGet]
