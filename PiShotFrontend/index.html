@@ -3,68 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Basketball Scoreboard</title>
-    
-    <!-- Link to your separate CSS file -->
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- Load Vue.js directly from the internet -->
+    <title>PiShot Eksam Project</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
+    <div id="app">
+        <section class="create-profile">
+            <h2>Create New Profile</h2>
+            <form @submit.prevent="createProfile">
+                <input type="text" v-model="newProfile.Name" placeholder="Profile Name" required>
+                <input type="text" v-model="newProfile.ProfileImagePath" placeholder="Image URL (optional)">
+                <button type="submit">Create Profile</button>
+            </form>
+        </section>
 
-    <div id="app" v-cloak>
-        <!-- HEADER -->
-        <header>
-            <div class="live-badge">● LIVE</div>
-            <h1>ARENA SCOREBOARD</h1>
-        </header>
+        <hr>
 
-        <!-- CONNECTION STATUS -->
-        <div class="status-bar" :class="connectionStatus">
-            System Status: {{ connectionStatus }}
-        </div>
+        <section class="profile-list">
+            <h2>All Profiles (Total: {{ profiles.length }})</h2>
+            <div v-if="loading" class="loading">Loading profiles...</div>
+            <div v-else-if="profiles.length === 0" class="no-profiles">No profiles found. Create one above!</div>
+            <ul v-else>
+                <li v-for="profile in profiles" :key="profiles.id">
+                    <strong>{{ profile.name }}</strong> (ID: {{ profile.id }})
+                    <button @click="deleteProfile(profile.id)" class="delete-btn">Delete</button>
+                    <p class="image-path">{{ profile.profileImagePath || 'No Image Path' }}</p>
+                </li>
+            </ul>
+        </section>
 
-        <!-- LOADING SPINNER -->
-        <div v-if="loading" class="loading-msg">
-            Connecting to Stadium...
-        </div>
-
-        <!-- MAIN GAME AREA -->
-        <div v-else class="game-board">
-            
-            <!-- WINNER OVERLAY -->
-            <div v-if="winner" class="winner-overlay">
-                <div class="trophy">🏆</div>
-                <h1>{{ winner }} WINS!</h1>
-                <p>Please reset game on terminal</p>
-            </div>
-
-            <!-- SCORE CARDS -->
-            <div class="players-container">
-                
-                <!-- This loop creates a card for every player found in the database -->
-                <div 
-                    v-for="(player, index) in players" 
-                    :key="index" 
-                    class="player-card"
-                    :class="{ 'leader': isLeader(player) }"
-                >
-                    <div class="player-name">{{ player.name }}</div>
-                    <div class="player-score">{{ player.score }}</div>
-                    <div class="player-rank" v-if="isLeader(player)">LEADER</div>
-                </div>
-
-                <!-- Empty State -->
-                <div v-if="players.length === 0" class="waiting-msg">
-                    Waiting for game data...
-                </div>
-            </div>
-        </div>
+        <div v-if="message" :class="['message', messageType]">{{ message }}</div>
     </div>
 
-    <!-- Link to your separate JS file -->
     <script src="index.js"></script>
-
 </body>
 </html>

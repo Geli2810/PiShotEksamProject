@@ -9,6 +9,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ProfileRepository>();
+builder.Services.AddScoped<Class1Repo>();
 
 builder.Services.AddCors(options =>
 {

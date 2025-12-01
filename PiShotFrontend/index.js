@@ -1,87 +1,112 @@
-const { createApp } = Vue;
+const API_BASE_URL = '';
 
-createApp({
+const app = Vue.createApp({
     data() {
         return {
-            // --- CONFIGURATION ---
-            // REPLACE THIS with your actual Azure API URL
-            apiUrl: "https://pishot-project-hqd6ffa0gvejbufu.canadacentral-01.azurewebsites.net/api/scores/live",
-            
             profiles: [],
-            apiProfileUrl: "https://pishot-project-hqd6ffa0gvejbufu.canadacentral-01.azurewebsites.net/api/Profile",
-            // --- STATE ---
-            players: [],      // Stores [{name: "Alice", score: 2}, ...]
-            loading: true,
-            winner: null,
-            connectionStatus: "Connecting...",
-            pollingTimer: null,
-            winningScore: 5   // Must match your Python Logic
+            newProfile: {
+                Name: '',
+                ProfileImagePath: ''
+            },
+            loading: false,
+            message: '',
+            messageType: '',
         };
     },
     mounted() {
-        // Run immediately when page loads
-        this.fetchScores();
-        
-        // Then run every 1 second (1000ms)
-        this.pollingTimer = setInterval(this.fetchScores, 1000);
-    },
-    beforeUnmount() {
-        // Clean up timer if page closes (good practice)
-        clearInterval(this.pollingTimer);
+        this.fetchProfiles();
     },
     methods: {
-        async fetchScores() {
+        // READ: Get all profiles (HTTP GET)
+        async fetchProfiles() {
+            this.loading = true;
+            this.message = '';
             try {
-                // 1. Fetch data from C# API
-                const response = await fetch(this.apiUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`Server Error: ${response.status}`);
+                const response = await fetch(API_BASE_URL);
+
+                if (response.status === 204) {
+                    this.profiles = [];
+                } else if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                } else {
+                    this.profiles = await response.json();
                 }
+            } catch (error) {
+                console.error("Error fetching profiles:", error);
+                this.setMessage(`Failed to fetch profiles: ${error.message}`, 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
 
-                // 2. Parse JSON
-                // API returns object like: { "Player 1": 3, "Player 2": 5 }
-                const data = await response.json();
+        // CREATE: Add a new profile (HTTP POST)
+        async createProfile() {
+            if (!this.newProfile.Name) {
+                this.setMessage("Profile Name is required.", 'error');
+                return;
+            }
 
-                // 3. Convert Object to Array for Vue List
-                this.players = Object.entries(data).map(([key, value]) => {
-                    return { name: key, score: value };
+            try {
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.newProfile),
                 });
 
-                // 4. Sort alphabetically to keep names from jumping around
-                this.players.sort((a, b) => a.name.localeCompare(b.name));
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.title || errorData.message || `Failed with status: ${response.status}`);
+                }
 
-                // 5. Update Status
-                this.connectionStatus = "Connected";
-                this.loading = false;
-
-                // 6. Check for Winner
-                this.checkWinner();
-
+                // API returns Status 201 Created with the new Profile object
+                const createdProfile = await response.json();
+                this.profiles.push(createdProfile); // Add to the local list
+                this.newProfile.Name = ''; // Clear form
+                this.newProfile.ProfileImagePath = '';
+                this.setMessage(`Profile '${createdProfile.name}' created successfully!`, 'success');
             } catch (error) {
-                console.error("Scoreboard Error:", error);
-                this.connectionStatus = "Error - Retrying...";
+                console.error("Error creating profile:", error);
+                this.setMessage(`Failed to create profile: ${error.message}`, 'error');
             }
         },
 
-        isLeader(player) {
-            // Logic: Is this player's score the highest (and > 0)?
-            if (player.score === 0) return false;
-            
-            // Find the highest score in the array
-            const maxScore = Math.max(...this.players.map(p => p.score));
-            return player.score === maxScore;
+        // Delete a profile (HTTP DELETE)
+        async deleteProfile(profileId) {
+            if (!confirm(`Are you sure you want to delete profile ID ${profileId}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${profileId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to delete profile with status: ${response.status}`);
+                }
+
+                // API returns the deleted profile object
+                const deletedProfile = await response.json();
+
+                // Remove thr profile from the local array
+                this.profiles = this.profiles.filter(p => p.id !== profileId);
+                this.setMessage(`Profile '${deletedProfile.name}' (ID: ${profileId}) deleted successfully.`, 'success');
+            } catch (error) {
+                console.error("Error deleting profile:", error);
+                this.setMessage(`Failed to delete profile: ${error.message}`, 'error');
+            }
         },
 
-        checkWinner() {
-            // Find a player with score >= winningScore
-            const winnerObj = this.players.find(p => p.score >= this.winningScore);
-            
-            if (winnerObj) {
-                this.winner = winnerObj.name;
-            } else {
-                this.winner = null;
-            }
+        // Helper function for showing temporary messages
+        setMessage(msg, type) {
+            this.message = msg;
+            this.messageType = type;
+            setTimeout(() => {
+                this.message = '';
+            }, 5000); // Clear message after 5 seconds
         }
     }
-}).mount('#app');
+});
+app.mount('#app');
