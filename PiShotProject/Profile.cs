@@ -11,6 +11,7 @@ namespace PiShotProject
         private int _id;
         private string _name;
         private string _profileImagePath;
+        public const string DefaultProfileImagePath = "./Images/Default_Profile_Image.jpg";
 
         public Profile(string name, string profileImagePath) 
         {
@@ -18,7 +19,7 @@ namespace PiShotProject
             ProfileImagePath = profileImagePath;
         }
 
-        public Profile() : this("Default Name", "default/path/to/image.png") { }
+        public Profile() : this("Default Name", DefaultProfileImagePath) { }
 
         public int Id { get; set; }
 
@@ -43,9 +44,9 @@ namespace PiShotProject
             get { return _profileImagePath; }
             set 
             { 
-                if(string.IsNullOrEmpty(value))
+                if(string.IsNullOrWhiteSpace(value))
                 {
-                    throw new ArgumentException("Profile image path cannot be null or empty");
+                    throw new ArgumentException("Profile image path cannot be null or whitespace");
                 }
                 _profileImagePath = value; 
             }

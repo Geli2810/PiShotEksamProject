@@ -93,7 +93,7 @@ public class ProfileTests
     {
         Profile newProfile = new Profile();
         Assert.AreEqual("Default Name", newProfile.Name);
-        Assert.AreEqual("default/path/to/image.png", newProfile.ProfileImagePath);
+        Assert.AreEqual("./Images/Default_Profile_Image.jpg", newProfile.ProfileImagePath);
     }
 
 }
