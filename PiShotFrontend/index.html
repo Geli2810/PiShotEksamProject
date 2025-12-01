@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PiShot Eksam Project</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
@@ -13,8 +13,8 @@
         <section class="create-profile">
             <h2>Create New Profile</h2>
             <form @submit.prevent="createProfile">
-                <input type="text" v-model="newProfile.Name" placeholder="Profile Name" required>
-                <input type="text" v-model="newProfile.ProfileImagePath" placeholder="Image URL (optional)">
+                <input type="text" v-model="newProfile.name" placeholder="Profile Name" required>
+                <input type="text" v-model="newProfile.profileImagePath" placeholder="Image URL (optional)">
                 <button type="submit">Create Profile</button>
             </form>
         </section>
@@ -27,9 +27,9 @@
             <div v-else-if="profiles.length === 0" class="no-profiles">No profiles found. Create one above!</div>
             <ul v-else>
                 <li v-for="profile in profiles" :key="profile.id">
-                    <strong>{{ profile.Name }}</strong> (ID: {{ profile.id }})
+                    <strong>{{ profile.name }}</strong>
                     <button @click="deleteProfile(profile.id)" class="delete-btn">Delete</button>
-                    <p class="image-path">{{ profile.ProfileImagePath || 'No Image Path' }}</p>
+                    <p class="image-path">{{ profile.profileImagePath || 'No Image Path' }}</p>
                 </li>
             </ul>
         </section>

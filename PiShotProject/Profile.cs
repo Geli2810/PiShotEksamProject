@@ -8,12 +8,11 @@ namespace PiShotProject
 {
     public class Profile
     {
-        private int _id;
         private string _name;
         private string _profileImagePath;
         public const string DefaultProfileImagePath = "./Images/Default_Profile_Image.jpg";
 
-        public Profile(string name, string profileImagePath) 
+        public Profile(string name, string profileImagePath = DefaultProfileImagePath) 
         {
             Name = name;
             ProfileImagePath = profileImagePath;
@@ -39,17 +38,11 @@ namespace PiShotProject
                 _name = value; 
             }
         }
+
         public string ProfileImagePath
         {
             get { return _profileImagePath; }
-            set 
-            { 
-                if(string.IsNullOrWhiteSpace(value))
-                {
-                    throw new ArgumentException("Profile image path cannot be null or whitespace");
-                }
-                _profileImagePath = value; 
-            }
+            set { _profileImagePath = value; }
         }
 
         public override string ToString()

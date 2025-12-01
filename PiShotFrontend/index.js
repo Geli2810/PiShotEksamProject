@@ -5,8 +5,8 @@ const app = Vue.createApp({
         return {
             profiles: [],
             newProfile: {
-                Name: '',
-                ProfileImagePath: ''
+                name: '',
+                profileImagePath: ''
             },
             loading: false,
             message: '',
@@ -31,6 +31,7 @@ const app = Vue.createApp({
                 }
             } catch (error) {
                 console.error("Error fetching profiles:", error);
+                const errorMsg = error.response?.data?.title || error.response?.data?.message || error.message;
                 this.setMessage(`Failed to fetch profiles: ${errorMsg}`, 'error');
             } finally {
                 this.loading = false;
@@ -39,19 +40,25 @@ const app = Vue.createApp({
 
         // CREATE: Add a new profile (HTTP POST)
         async createProfile() {
-            if (!this.newProfile.Name) {
+            if (!this.newProfile.name) {
                 this.setMessage("Profile Name is required.", 'error');
                 return;
             }
 
+            const payload = {
+                Name: this.newProfile.name,
+                profileImagePath: imagePath || ''
+            };
+
             try {
-                const response = await axios.post(API_BASE_URL, this.newProfile);
+                console.log('Sending Payload:', payload);
+                const response = await axios.post(API_BASE_URL, payload);
 
                 // API returns Status 201 Created with the new Profile object
-                const createdProfile = response.json();
+                const createdProfile = response.data;
                 this.profiles.push(createdProfile); // Add to the local list
-                this.newProfile.Name = ''; // Clear form
-                this.newProfile.ProfileImagePath = '';
+                this.newProfile.name = ''; // Clear form
+                this.newProfile.profileImagePath = '';
                 this.setMessage(`Profile '${createdProfile.name}' created successfully!`, 'success');
             } catch (error) {
                 console.error("Error creating profile:", error);
@@ -71,7 +78,7 @@ const app = Vue.createApp({
                 const response = await axios.delete(`${API_BASE_URL}/${profileId}`);
 
                 // API returns the deleted profile object
-                const deletedProfile = response.json();
+                const deletedProfile = response.data;
 
                 // Remove thr profile from the local array
                 this.profiles = this.profiles.filter(p => p.id !== profileId);
@@ -79,7 +86,7 @@ const app = Vue.createApp({
             } catch (error) {
                 console.error("Error deleting profile:", error);
                 const errorMsg = error.response ? `Failed with status: ${error.response.status}` : error.message;
-                this.setMessage(`Failed to delete profile: ${error.message}`, 'error');
+                this.setMessage(`Failed to delete profile: ${errorMsg}`, 'error');
             }
         },
 

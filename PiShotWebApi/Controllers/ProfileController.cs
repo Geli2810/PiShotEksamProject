@@ -96,7 +96,7 @@ namespace PiShotWebApi.Controllers
             Profile profile = new Profile()
             {
                 Name = profileDTO.Name,
-                ProfileImagePath = profileDTO.ProfileImagePath
+                ProfileImagePath = string.IsNullOrWhiteSpace(profileDTO.ProfileImagePath) ? null : profileDTO.ProfileImagePath
             };
             return profile;
         }

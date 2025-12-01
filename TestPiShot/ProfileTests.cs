@@ -73,20 +73,6 @@ public class ProfileTests
         Assert.AreEqual("/images/johndoe.png", profile.ProfileImagePath);
     }
 
-    [TestMethod]
-    public void TestProfileImagePathCannotBeNull()
-    {
-        //assert
-        Assert.ThrowsException<ArgumentException>(() => profile.ProfileImagePath = null!);
-    }
-
-    [TestMethod]
-    public void TestProfileImagePathCannotBeEmpty()
-    {
-        //assert
-        Assert.ThrowsException<ArgumentException>(() => profile.ProfileImagePath = "");
-    }
-
     //Constructor Test'
     [TestMethod]
     public void TestDefaultProfileConstructor()

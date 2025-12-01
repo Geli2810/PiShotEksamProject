@@ -10,8 +10,6 @@ namespace PiShotProject
     public class ProfileRepository
     {
         private readonly PiShotDBContext _dbContext;
-        public readonly string _DefaultProfileImagePath = "./Images/Default_Profile_Image.jpg";
-
 
         public ProfileRepository(PiShotDBContext dbContext)
         {
@@ -26,9 +24,9 @@ namespace PiShotProject
         public Profile AddProfile(Profile profile)
         {
             profile.Id = 0;
-            if (string.IsNullOrEmpty(profile.ProfileImagePath))
+            if (profile.ProfileImagePath == null)
             {
-                profile.ProfileImagePath = _DefaultProfileImagePath;
+                profile.ProfileImagePath = Profile.DefaultProfileImagePath;
             }
             _dbContext.Profiles.Add(profile);
             _dbContext.SaveChanges();
