@@ -1,4 +1,4 @@
-const API_BASE_URL = '';
+const API_BASE_URL = 'https://pishot-project-hqd6ffa0gvejbufu.canadacentral-01.azurewebsites.net/api/Profile';
 
 const app = Vue.createApp({
     data() {
@@ -22,18 +22,16 @@ const app = Vue.createApp({
             this.loading = true;
             this.message = '';
             try {
-                const response = await fetch(API_BASE_URL);
+                const response = await axios.get(API_BASE_URL);
 
-                if (response.status === 204) {
+                if (response.status === 204 || response.data === null) {
                     this.profiles = [];
-                } else if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
                 } else {
-                    this.profiles = await response.json();
+                    this.profiles = response.data;
                 }
             } catch (error) {
                 console.error("Error fetching profiles:", error);
-                this.setMessage(`Failed to fetch profiles: ${error.message}`, 'error');
+                this.setMessage(`Failed to fetch profiles: ${errorMsg}`, 'error');
             } finally {
                 this.loading = false;
             }
@@ -47,28 +45,19 @@ const app = Vue.createApp({
             }
 
             try {
-                const response = await fetch(API_BASE_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(this.newProfile),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.title || errorData.message || `Failed with status: ${response.status}`);
-                }
+                const response = await axios.post(API_BASE_URL, this.newProfile);
 
                 // API returns Status 201 Created with the new Profile object
-                const createdProfile = await response.json();
+                const createdProfile = response.json();
                 this.profiles.push(createdProfile); // Add to the local list
                 this.newProfile.Name = ''; // Clear form
                 this.newProfile.ProfileImagePath = '';
                 this.setMessage(`Profile '${createdProfile.name}' created successfully!`, 'success');
             } catch (error) {
                 console.error("Error creating profile:", error);
-                this.setMessage(`Failed to create profile: ${error.message}`, 'error');
+                const errorData = error.response?.data || {};
+                const errorMsg = errorData.title || errorData.message || error.message;
+                this.setMessage(`Failed to create profile: ${errorMsg}`, 'error');
             }
         },
 
@@ -79,22 +68,17 @@ const app = Vue.createApp({
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/${profileId}`, {
-                    method: 'DELETE',
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Failed to delete profile with status: ${response.status}`);
-                }
+                const response = await axios.delete(`${API_BASE_URL}/${profileId}`);
 
                 // API returns the deleted profile object
-                const deletedProfile = await response.json();
+                const deletedProfile = response.json();
 
                 // Remove thr profile from the local array
                 this.profiles = this.profiles.filter(p => p.id !== profileId);
                 this.setMessage(`Profile '${deletedProfile.name}' (ID: ${profileId}) deleted successfully.`, 'success');
             } catch (error) {
                 console.error("Error deleting profile:", error);
+                const errorMsg = error.response ? `Failed with status: ${error.response.status}` : error.message;
                 this.setMessage(`Failed to delete profile: ${error.message}`, 'error');
             }
         },

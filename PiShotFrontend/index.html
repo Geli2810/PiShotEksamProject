@@ -26,10 +26,10 @@
             <div v-if="loading" class="loading">Loading profiles...</div>
             <div v-else-if="profiles.length === 0" class="no-profiles">No profiles found. Create one above!</div>
             <ul v-else>
-                <li v-for="profile in profiles" :key="profiles.id">
-                    <strong>{{ profile.name }}</strong> (ID: {{ profile.id }})
+                <li v-for="profile in profiles" :key="profile.id">
+                    <strong>{{ profile.Name }}</strong> (ID: {{ profile.id }})
                     <button @click="deleteProfile(profile.id)" class="delete-btn">Delete</button>
-                    <p class="image-path">{{ profile.profileImagePath || 'No Image Path' }}</p>
+                    <p class="image-path">{{ profile.ProfileImagePath || 'No Image Path' }}</p>
                 </li>
             </ul>
         </section>
