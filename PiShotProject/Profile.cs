@@ -20,8 +20,7 @@ namespace PiShotProject
 
         public Profile() : this("Default Name", "default/path/to/image.png") { }
 
-        public int Id
-        { get; set; }
+        public int Id { get; set; }
 
         public string Name
         {
@@ -37,7 +36,6 @@ namespace PiShotProject
                     throw new ArgumentOutOfRangeException("Name must be between 2 and 50 characters");
                 }
                 _name = value; 
-
             }
         }
         public string ProfileImagePath
@@ -57,6 +55,5 @@ namespace PiShotProject
         {
             return $"Profile: {Name}, Image Path: {ProfileImagePath}";
         }
-
     }
 }

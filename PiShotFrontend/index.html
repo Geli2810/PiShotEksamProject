@@ -1,2 +1,26 @@
 <!DOCTYPE html>
-<h1>Hello World!</h1>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>Say Hello</title>
+</head>
+<body>
+<div id="profile-list-app">
+    <h1>User Profiles</h1>
+    <p v-if="loading">Loading profiles...</p>
+    <p v-else-if="error" class="error">Error: {{ error }}</p>
+
+    <div v-else class="profiles-container">
+        <div v-for="profile in profiles" :key="profile.id" class="profile-card">
+            <img :src="profile.profileImagePath" :alt="profile.name + ' profile image'" class="profile-image">
+            <h2 class="profile-name">{{ profile.name }}</h2>
+            <p class="profile-id">ID: {{ profile.id }}</p>
+        </div>
+
+        <p v-if="profile.length === 0">No profiles found.</p>
+    </div>
+</div>
+<script src="index.js"></script>
+</body>

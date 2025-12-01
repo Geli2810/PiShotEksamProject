@@ -58,6 +58,5 @@ namespace PiShotProject
             _dbContext.SaveChanges();
             return profileToDelete;
         }
-
     }
 }

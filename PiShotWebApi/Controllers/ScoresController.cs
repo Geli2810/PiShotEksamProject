@@ -55,7 +55,6 @@ namespace BasketballApi.Controllers
         }
 
 
-
         // GET: api/scores/live
         // Called by Vue Frontend to get the scoreboard
         [HttpGet("live")]
