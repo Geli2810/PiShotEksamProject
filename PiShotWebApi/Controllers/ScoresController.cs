@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Text.Json.Serialization;
+
 
 namespace BasketballApi.Controllers
 {
@@ -90,8 +92,18 @@ namespace BasketballApi.Controllers
         }
     }
 
+
+
     public class ScoreRequest
     {
+        // This allows Python's {"player": "..."} to work
+        [JsonPropertyName("player")]
         public string Player { get; set; }
+
+        // This handles the type field if you use it later
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
     }
+
+
 }
