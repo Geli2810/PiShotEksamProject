@@ -1,4 +1,4 @@
-// index.js (Modified)
+// index.js (Komplet og Opdateret)
 const API_BASE_URL = 'https://pishot-project-hqd6ffa0gvejbufu.canadacentral-01.azurewebsites.net/api/Profile';
 
 const app = Vue.createApp({
@@ -86,8 +86,8 @@ const app = Vue.createApp({
         },
 
         // Delete a profile (HTTP DELETE)
-    async deleteProfile(profileId) {
-      if (!confirm(`Are you sure you want to delete profile ${profile.Name}?`)) {
+    async deleteProfile(profileId, profileName) { // <--- METODE ER OK
+      if (!confirm(`Are you sure you want to delete profile ${profileName}?`)) { // <--- BRUGER profileName
         return;
       }
 
@@ -97,7 +97,7 @@ const app = Vue.createApp({
         // API returns the deleted profile object
         const deletedProfile = response.data;
 
-        // Remove thr profile from the local array
+        // Remove the profile from the local array
         this.profiles = this.profiles.filter(p => p.id !== profileId);
         this.setMessage(`Profile '${deletedProfile.name}' (ID: ${profileId}) deleted successfully.`, 'success');
       } catch (error) {
@@ -120,7 +120,7 @@ const app = Vue.createApp({
 
     cancelUpdate() {
         this.profileToEdit = null;
-        this.setMessage("Profile update cancelled.", 'error');
+        this.setMessage("Profile update cancelled.", 'info'); // Ændret til 'info'
     },
 
     async saveUpdate(profileId) {
@@ -170,6 +170,6 @@ const app = Vue.createApp({
         this.message = '';
       }, 5000); // Clear message after 5 seconds
     }
-  }
+}
 });
 app.mount('#app');

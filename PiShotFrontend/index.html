@@ -51,7 +51,7 @@
                         <button v-else @click="saveUpdate(profile.id)" class="update-btn save-btn">Save</button>
                         <button v-if="isEditing(profile.id)" @click="cancelUpdate" class="delete-btn">Cancel</button>
 
-                        <button v-else @click="deleteProfile(profile.id)" class="delete-btn">Delete</button>
+                        <button v-else @click="deleteProfile(profile.id, profile.name)" class="delete-btn">Delete</button>
                     </div>
 
                     <div v-if="isEditing(profile.id)" class="edit-section">
