@@ -14,7 +14,18 @@
             <h2>Create New Profile</h2>
             <form @submit.prevent="createProfile">
                 <input type="text" v-model="newProfile.name" placeholder="Profile Name" required>
-                <input type="text" v-model="newProfile.profileImagePath" placeholder="Image URL (optional)">
+
+                <div class="image-picker">
+                    <label>Select a Profile Picture:</label>
+                    <div class="avatar-option" :class="{ 'selected': selectedImage === '' && !newProfile.profileImagePath.trim() }" @click="selectedImage = ''; newProfile.profileImagePath = ''" title="No Image">
+                        <span class="no-image-placeholder">🚫</span>
+                    </div>
+
+                    <div v-for="imagePath in hardcodedImages" :key="imagePath" class="avatar-option" :class="{ 'selected': selectedImage === imagePath && !newProfile.profileImagePath.trim() }" @click="selectedImage = imagePath; newProfile.profileImagePath = ''">
+                        <img :src="imagePath" alt="Profile Avatar" width="50" height="50">
+                    </div>
+                </div>
+
                 <button type="submit">Create Profile</button>
             </form>
         </section>
@@ -27,10 +38,33 @@
             <div v-else-if="profiles.length === 0" class="no-profiles">No profiles found. Create one above!</div>
             <ul v-else>
                 <li v-for="profile in profiles" :key="profile.id">
-                    <strong>{{ profile.name }}</strong>
-                    <button @click="deleteProfile(profile.id)" class="delete-btn">Delete</button>
-                    <button @click="updateProfile(profile.id)" class="update-btn">Update</button>
-                    <p class="image-path">{{ profile.profileImagePath || 'No Image Path' }}</p>
+                    <div class="profile-display">
+                        <img v-if="profile.profileImagePath" :src="profile.profileImagePath" alt="Profile Picture" width="50" height="50" class="profile-image">
+                        <div v-else class="profile-image-placeholder">
+                            <span>{{ isEditing(profile.id) ? profileToEdit.name.charAt(0) : profile.name.charAt(0) }}</span>
+                        </div>
+                        <strong v-if="!isEditing(profile.id)">{{ profile.name }}</strong>
+                        <input v-else type="text" v-model="profileToEdit.name" placeholder="New Profile Name" required>
+                    </div>
+                    <div class="actions">
+                        <button v-if="!isEditing(profile.id)" @click="startUpdate(profile)" class="update-btn">Edit</button>
+                        <button v-else @click="saveUpdate(profile.id)" class="update-btn save-btn">Save</button>
+                        <button v-if="isEditing(profile.id)" @click="cancelUpdate" class="delete-btn">Cancel</button>
+
+                        <button v-else @click="deleteProfile(profile.id)" class="delete-btn">Delete</button>
+                    </div>
+
+                    <div v-if="isEditing(profile.id)" class="edit-section">
+                        <label>Change Profile Picture:</label>
+                        <div class="image-picker-update">
+                            <div class="avatar-option" :class="{ 'selected': profileToEdit.profileImagePath === '' }" @click="profileToEdit.profileImagePath = ''" title="No Image">
+                                <span class="no-image-placeholder">🚫</span>
+                            </div>
+                            <div v-for="imagePath in hardcodedImages" :key="imagePath" class="avatar-option" :class="{ 'selected': profileToEdit.profileImagePath === imagePath }" @click="profileToEdit.profileImagePath = imagePath">
+                                <img :src="imagePath" alt="Profile Avatar" width="50" height="50">
+                            </div>
+                        </div>
+                    </div>
                 </li>
             </ul>
         </section>
