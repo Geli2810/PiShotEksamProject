@@ -29,6 +29,7 @@
                 <li v-for="profile in profiles" :key="profile.id">
                     <strong>{{ profile.name }}</strong>
                     <button @click="deleteProfile(profile.id)" class="delete-btn">Delete</button>
+                    <button @click="updateProfile(profile.id)" class="update-btn">Update</button>
                     <p class="image-path">{{ profile.profileImagePath || 'No Image Path' }}</p>
                 </li>
             </ul>
