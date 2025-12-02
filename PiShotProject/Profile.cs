@@ -12,7 +12,7 @@ namespace PiShotProject
         private string _profileImagePath;
         public const string DefaultProfileImagePath = "https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg";
 
-        public Profile(string name, string profileImagePath = DefaultProfileImagePath) 
+        public Profile(string name, string? profileImagePath = DefaultProfileImagePath) 
         {
             Name = name;
             ProfileImagePath = profileImagePath;
