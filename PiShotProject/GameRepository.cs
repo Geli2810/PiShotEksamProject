@@ -25,7 +25,7 @@ namespace PiShotProject
         {
             return _dbContext.Games.ToList();
         }
-        public Game? GetGameById(int id)
+        public Game? GetById(int id)
         {
             return _dbContext.Games.FirstOrDefault(p => p.Id == id);
         }

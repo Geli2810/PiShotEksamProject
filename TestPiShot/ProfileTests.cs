@@ -6,7 +6,7 @@ namespace TestPiShot;
 [TestClass]
 public class ProfileTests
 {
-    private readonly Profile profile = new Profile("John Doe", "/images/johndoe.png");
+    private readonly Profile profile = new Profile("John Doe", "https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg");
 
 
     //Name Tests
@@ -70,7 +70,7 @@ public class ProfileTests
     [TestMethod]
     public void TestProfileImagePath()
     {
-        Assert.AreEqual("/images/johndoe.png", profile.ProfileImagePath);
+        Assert.AreEqual("https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg", profile.ProfileImagePath);
     }
 
     //Constructor Test'
@@ -79,7 +79,7 @@ public class ProfileTests
     {
         Profile newProfile = new Profile();
         Assert.AreEqual("Default Name", newProfile.Name);
-        Assert.AreEqual("./Images/Default_Profile_Image.jpg", newProfile.ProfileImagePath);
+        Assert.AreEqual("https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg", newProfile.ProfileImagePath);
     }
 
 }
