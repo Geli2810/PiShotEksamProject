@@ -33,7 +33,7 @@ namespace PiShotProject.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetGameById(int id)
         {
-            var game = _gameRepository.GetGameById(id);
+            var game = _gameRepository.GetById(id);
             return game != null ? Ok(game) : NotFound();
         }
 
@@ -52,9 +52,9 @@ namespace PiShotProject.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult SetWinner(int id, [FromBody] GameDTO scores)
+        public IActionResult SetPlayerWinner(int id, [FromBody] GameDTO scores)
         {
-            var game = _gameRepository.GetGameById(id);
+            var game = _gameRepository.GetById(id);
             if (game == null) return NotFound();
 
             try
@@ -70,7 +70,7 @@ namespace PiShotProject.Controllers
 
         [HttpGet("profile/{profileId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult GetGamesForProfile(int profileId)
+        public IActionResult GetAllGamesForPlayer(int profileId)
         {
             var games = _gameRepository.GetGamesForProfile(profileId);
             return Ok(games);
@@ -78,7 +78,7 @@ namespace PiShotProject.Controllers
 
         [HttpGet("winner/{profileId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult GetGamesByWinner(int profileId)
+        public IActionResult GetAllPlayerWins(int profileId)
         {
             var games = _gameRepository.GetGamesByWinner(profileId);
             return Ok(games);
