@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using PiShotWebApi.Models;
+using PiShotREST.Models;
 
-namespace PiShotWebApi.Controllers
+namespace PiShotREST.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
