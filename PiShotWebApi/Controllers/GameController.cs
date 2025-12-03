@@ -16,12 +16,15 @@ namespace PiShotWebApi.Controllers
         {
             using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
             {
-                // We set StartTime = GETDATE(). 
-                // Any score before this time is "History". Any score after is "Live".
+                // RESET Scores/Attempts AND Set the StartTime
                 string query = @"
-                    UPDATE CurrentGame 
-                    SET Player1Id = @P1, Player2Id = @P2, IsActive = 1, StartTime = GETDATE() 
-                    WHERE Id = 1";
+            UPDATE CurrentGame 
+            SET Player1Id = @P1, Player2Id = @P2, IsActive = 1, StartTime = GETDATE() 
+            WHERE Id = 1;
+            
+            TRUNCATE TABLE Scores;
+            TRUNCATE TABLE ShotAttempts;
+        ";
 
                 using (var cmd = new SqlCommand(query, conn))
                 {
@@ -34,20 +37,20 @@ namespace PiShotWebApi.Controllers
             return Ok(new { msg = "Game Started" });
         }
 
-        [HttpPost("reset")]
+        [HttpPost("reset")] // or inside FinishGame
         public IActionResult Reset()
         {
-            // Just mark game as inactive.
             using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
             {
-                string query = "UPDATE CurrentGame SET IsActive = 0 WHERE Id = 1";
+                // Clear IsActive and StartTime
+                string query = "UPDATE CurrentGame SET IsActive = 0, StartTime = NULL WHERE Id = 1";
                 using (var cmd = new SqlCommand(query, conn))
                 {
                     conn.Open();
                     cmd.ExecuteNonQuery();
                 }
             }
-            return Ok(new { msg = "Game Ended" });
+            return Ok(new { msg = "Game Reset" });
         }
 
         [HttpGet("current")]
