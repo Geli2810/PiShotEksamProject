@@ -11,6 +11,13 @@ namespace PiShotWebApi.Models
         public int Attempts { get; set; }
         public double Accuracy { get; set; }
 
+
+
+
+
+
+
+
         // New Stats
         public int Wins { get; set; }
         public int Losses { get; set; }
@@ -28,7 +35,18 @@ namespace PiShotWebApi.Models
         public int WinnerId { get; set; }
     }
 
-    // (Keep StartGameRequest and ScoreRequest the same as before)
-    public class StartGameRequest { public int Player1Id { get; set; } public int Player2Id { get; set; } }
+
+
+    public class StartGameRequest
+    {
+        [JsonPropertyName("player1Id")]
+        public int Player1Id { get; set; }
+
+        [JsonPropertyName("player2Id")]
+        public int Player2Id { get; set; }
+    }
+
+
+
     public class ScoreRequest { [JsonPropertyName("profileId")] public int ProfileId { get; set; } }
 }
