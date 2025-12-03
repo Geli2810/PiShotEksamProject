@@ -10,6 +10,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ProfileRepository>();
 builder.Services.AddScoped<Class1Repo>();
+builder.Services.AddScoped<GameRepository>();
 
 builder.Services.AddCors(options =>
 {
