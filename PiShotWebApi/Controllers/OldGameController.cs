@@ -52,7 +52,7 @@ namespace PiShotProject.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult SetPlayerWinner(int id, [FromBody] GameDTO scores)
+        public IActionResult SetPlayerWinner(int id, [FromBody] OldGameDTO scores)
         {
             var game = _gameRepository.GetById(id);
             if (game == null) return NotFound();

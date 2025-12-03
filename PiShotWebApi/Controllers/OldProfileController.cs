@@ -8,11 +8,11 @@ namespace PiShotWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProfileController : ControllerBase
+    public class OldProfileController : ControllerBase
     {
         private ProfileRepository _repo;
 
-        public ProfileController(ProfileRepository repo)
+        public OldProfileController(ProfileRepository repo)
         {
             _repo = repo;
         }
@@ -41,7 +41,7 @@ namespace PiShotWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpPost]
-        public ActionResult <Profile> Post([FromBody] ProfileDTO newProfile)
+        public ActionResult <Profile> Post([FromBody] OldProfileDTO newProfile)
         {
             try
             {
@@ -64,7 +64,7 @@ namespace PiShotWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPut("{id}")]
-        public ActionResult<Profile> Put(int id, [FromBody] ProfileDTO updateProfile)
+        public ActionResult<Profile> Put(int id, [FromBody] OldProfileDTO updateProfile)
         {
             try
             {
@@ -91,7 +91,7 @@ namespace PiShotWebApi.Controllers
             return deletedProfile != null ? Ok(deletedProfile) : NotFound();
         }
 
-        private Profile ConvertDTOToProfile(ProfileDTO profileDTO)
+        private Profile ConvertDTOToProfile(OldProfileDTO profileDTO)
         {
             Profile profile = new Profile()
             {
