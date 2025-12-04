@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using PiShotWebApi.Models;
+using BasketballApi.Models;
 
-namespace PiShotWebApi.Controllers
+namespace BasketballApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -11,7 +11,6 @@ namespace PiShotWebApi.Controllers
         private readonly IConfiguration _config;
         public ScoresController(IConfiguration config) { _config = config; }
 
-        // POST: Record a Goal (Adds to lifetime history immediately)
         [HttpPost]
         public IActionResult AddScore([FromBody] ScoreRequest req)
         {
@@ -21,14 +20,12 @@ namespace PiShotWebApi.Controllers
                 using (var cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Pid", req.ProfileId);
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    conn.Open(); cmd.ExecuteNonQuery();
                 }
             }
             return Ok();
         }
 
-        // POST: Record an Attempt (Adds to lifetime history immediately)
         [HttpPost("shot_attempt")]
         public IActionResult AddAttempt([FromBody] ScoreRequest req)
         {
@@ -38,57 +35,80 @@ namespace PiShotWebApi.Controllers
                 using (var cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Pid", req.ProfileId);
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    conn.Open(); cmd.ExecuteNonQuery();
                 }
             }
             return Ok();
         }
 
-        // GET: Live Scoreboard (Filtered by Time)
         [HttpGet("live")]
         public IActionResult GetLive()
         {
             using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
             {
-                // LOGIC:
-                // 1. Get the Time the game started (@Start)
-                // 2. Count scores for P1 and P2 where Timestamp >= @Start
+                conn.Open();
 
-                string query = @"
-                    DECLARE @Start DATETIME;
-                    DECLARE @P1 INT; 
-                    DECLARE @P2 INT;
+                // 1. Get Game Config
+                string qGame = @"
+                    SELECT cg.Player1Id, cg.Player2Id, cg.IsTiebreak, cg.TiebreakOffsetP1, cg.TiebreakOffsetP2,
+                           p1.Name as P1Name, p1.ProfileImage as P1Img,
+                           p2.Name as P2Name, p2.ProfileImage as P2Img
+                    FROM CurrentGame cg
+                    LEFT JOIN Profiles p1 ON cg.Player1Id = p1.Id
+                    LEFT JOIN Profiles p2 ON cg.Player2Id = p2.Id
+                    WHERE cg.Id = 1";
 
-                    SELECT @Start = StartTime, @P1 = Player1Id, @P2 = Player2Id 
-                    FROM CurrentGame WHERE Id = 1;
+                int p1Id = 0, p2Id = 0, off1 = 0, off2 = 0;
+                string p1Name = "P1", p2Name = "P2", p1Img = "", p2Img = "";
+                bool isTiebreak = false;
 
-                    SELECT 
-                        p.Id, p.Name, 
-                        (SELECT COUNT(*) FROM Scores s 
-                         WHERE s.ProfileId = p.Id AND s.ScoredAt >= @Start) as Score
-                    FROM Profiles p 
-                    WHERE p.Id = @P1 OR p.Id = @P2";
-
-                var players = new List<dynamic>();
-
-                using (var cmd = new SqlCommand(query, conn))
+                using (var cmd = new SqlCommand(qGame, conn))
                 {
-                    conn.Open();
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        if (r.Read())
+                        {
+                            p1Id = (int)r["Player1Id"]; p2Id = (int)r["Player2Id"];
+                            p1Name = r["P1Name"]?.ToString() ?? "P1"; p2Name = r["P2Name"]?.ToString() ?? "P2";
+                            p1Img = r["P1Img"]?.ToString() ?? ""; p2Img = r["P2Img"]?.ToString() ?? "";
+                            isTiebreak = r["IsTiebreak"] != DBNull.Value && (bool)r["IsTiebreak"];
+                            off1 = r["TiebreakOffsetP1"] != DBNull.Value ? (int)r["TiebreakOffsetP1"] : 0;
+                            off2 = r["TiebreakOffsetP2"] != DBNull.Value ? (int)r["TiebreakOffsetP2"] : 0;
+                        }
+                    }
+                }
+
+                // 2. Count TOTAL Scores
+                string qScores = "SELECT ProfileId, COUNT(*) as Cnt FROM Scores GROUP BY ProfileId";
+                int total1 = 0, total2 = 0;
+                using (var cmd = new SqlCommand(qScores, conn))
+                {
                     using (var r = cmd.ExecuteReader())
                     {
                         while (r.Read())
                         {
-                            players.Add(new
-                            {
-                                id = (int)r["Id"],
-                                name = r["Name"].ToString(),
-                                score = (int)r["Score"]
-                            });
+                            int pid = (int)r["ProfileId"];
+                            if (pid == p1Id) total1 = (int)r["Cnt"];
+                            if (pid == p2Id) total2 = (int)r["Cnt"];
                         }
-                        return Ok(players);
                     }
                 }
+
+                // 3. CHECK FOR TIEBREAK TRIGGER (10-10)
+                if (!isTiebreak && total1 == 10 && total2 == 10)
+                {
+                    string setTb = "UPDATE CurrentGame SET IsTiebreak = 1, TiebreakOffsetP1 = 10, TiebreakOffsetP2 = 10 WHERE Id = 1";
+                    using (var cmd = new SqlCommand(setTb, conn)) cmd.ExecuteNonQuery();
+                    isTiebreak = true; off1 = 10; off2 = 10;
+                }
+
+                // 4. Return Data
+                return Ok(new LiveScoreDTO
+                {
+                    IsTiebreak = isTiebreak,
+                    P1 = new PlayerScoreDTO { Id = p1Id, Name = p1Name, ProfileImage = p1Img, TotalScore = total1, VisualScore = total1 - off1 },
+                    P2 = new PlayerScoreDTO { Id = p2Id, Name = p2Name, ProfileImage = p2Img, TotalScore = total2, VisualScore = total2 - off2 }
+                });
             }
         }
     }
