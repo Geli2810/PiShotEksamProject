@@ -15,6 +15,10 @@ namespace PiShotWebApi.Models
         public int Wins { get; set; }
         public int Losses { get; set; }
         public double WinLossRatio { get; set; }
+
+        // NEW: Rank based on Win Rate
+        public int Rank { get; set; }
+
     }
 
     public class CreateProfileRequest

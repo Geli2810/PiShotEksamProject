@@ -10,15 +10,13 @@ namespace PiShotWebApi.Controllers
     {
         private readonly IConfiguration _config;
         public ProfilesController(IConfiguration config) { _config = config; }
-
-        // ... imports ...
         [HttpGet]
         public IActionResult GetAll()
         {
-            var list = new List<ProfileDTO>();
+            var rawList = new List<ProfileDTO>();
             using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
             {
-                // Advanced Query: Get Stats + Win/Loss counts
+                // 1. Fetch Data (Same query as before)
                 string query = @"
             SELECT p.Id, p.Name, p.ProfileImage,
             (SELECT COUNT(*) FROM Scores s WHERE s.ProfileId = p.Id) as Goals,
@@ -39,25 +37,43 @@ namespace PiShotWebApi.Controllers
                             int w = r["Wins"] != DBNull.Value ? (int)r["Wins"] : 0;
                             int l = r["Losses"] != DBNull.Value ? (int)r["Losses"] : 0;
 
-                            double wlRatio = l > 0 ? (double)w / l : w; // If 0 losses, ratio is equal to wins
+                            // Avoid division by zero
+                            double accuracy = a > 0 ? (double)g / a * 100 : 0;
 
-                            list.Add(new ProfileDTO
+                            // Win Ratio (Percentage of games won)
+                            int totalGames = w + l;
+                            double winRate = totalGames > 0 ? (double)w / totalGames : 0;
+
+                            rawList.Add(new ProfileDTO
                             {
                                 Id = (int)r["Id"],
                                 Name = r["Name"].ToString(),
                                 ProfileImage = r["ProfileImage"] != DBNull.Value ? r["ProfileImage"].ToString() : "",
                                 Goals = g,
                                 Attempts = a,
-                                Accuracy = a > 0 ? Math.Round((double)g / a * 100, 1) : 0,
+                                Accuracy = Math.Round(accuracy, 1),
                                 Wins = w,
                                 Losses = l,
-                                WinLossRatio = Math.Round(wlRatio, 2)
+                                WinLossRatio = Math.Round(winRate * 100, 1) // Store as percentage (e.g., 55.5)
                             });
                         }
                     }
                 }
             }
-            return Ok(list);
+
+            // 2. LOGIC: Sort by Win Ratio Descending, then Accuracy Descending
+            var sortedList = rawList
+                .OrderByDescending(p => p.WinLossRatio)
+                .ThenByDescending(p => p.Accuracy)
+                .ToList();
+
+            // 3. LOGIC: Assign Ranks
+            for (int i = 0; i < sortedList.Count; i++)
+            {
+                sortedList[i].Rank = i + 1;
+            }
+
+            return Ok(sortedList);
         }
 
         [HttpPost]
