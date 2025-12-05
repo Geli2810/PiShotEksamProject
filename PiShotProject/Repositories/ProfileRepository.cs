@@ -1,11 +1,12 @@
 ﻿using PiShotProject.ClassDB;
+using PiShotProject.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PiShotProject
+namespace PiShotProject.Repositories
 {
     public class ProfileRepository
     {
@@ -32,7 +33,7 @@ namespace PiShotProject
             _dbContext.SaveChanges();
             return profile;
         }
-        
+
         public Profile? GetProfileById(int id)
         {
             return _dbContext.Profiles.FirstOrDefault(p => p.Id == id);

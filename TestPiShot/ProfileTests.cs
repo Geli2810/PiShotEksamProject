@@ -1,5 +1,5 @@
 using Microsoft.Identity.Client;
-using PiShotProject;
+using PiShotProject.Models;
 
 namespace TestPiShot;
 
