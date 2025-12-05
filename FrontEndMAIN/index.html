@@ -3,96 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basketball Game</title>
+    <title>PiShot Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body>
     <div id="app" v-cloak>
-        
-        <!-- LOBBY -->
-        <div v-if="!gameActive" class="container lobby">
-            <h1>GAME LOBBY</h1>
-            
-            <!-- Profile Creator -->
-            <div class="create-box">
-                <h3>Create New Profile</h3>
-                <input v-model="newName" placeholder="Player Name">
-                <!-- File Input for Image -->
-                <input type="file" @change="handleFileUpload" accept="image/*">
-                <button @click="createProfile">Create</button>
-            </div>
-
-            <!-- Match Setup -->
-            <div class="selectors">
-                <!-- Player 1 -->
-                <div class="col">
-                    <h3>PLAYER 1</h3>
-                    <select v-model="selectedP1">
-                        <option v-for="p in profiles" :value="p.id">
-                            {{ p.name }} (W:{{p.wins}} / L:{{p.losses}})
-                        </option>
-                    </select>
-                    <!-- Stats Preview -->
-                    <div v-if="selectedP1" class="stats-preview">
-                        <img :src="getProfile(selectedP1).profileImage || 'https://cdn.nba.com/headshots/nba/latest/1040x760/1449.png'" class="avatar-small">
-                        <p>Accuracy: {{ getProfile(selectedP1).accuracy }}%</p>
-                        <p>Win Ratio: {{ getProfile(selectedP1).winLossRatio }}</p>
-                    </div>
-                </div>
-
-                <!-- Player 2 -->
-                <div class="col">
-                    <h3>PLAYER 2</h3>
-                    <select v-model="selectedP2">
-                        <option v-for="p in profiles" :value="p.id">
-                             {{ p.name }} (W:{{p.wins}} / L:{{p.losses}})
-                        </option>
-                    </select>
-                    <!-- Stats Preview -->
-                    <div v-if="selectedP2" class="stats-preview">
-                        <img :src="getProfile(selectedP2).profileImage || 'https://www.usab.com/imgproxy/-AvpbjLzGRGH5tsHJROybQMh0x0T1rYboWbZk7y99wI/rs:fit:3000:0:0/g:ce/q:90/aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3VzYWItY29tLXByb2QvMjAyMS8wMi8wMDdmOGYwZC0yMTk0LTRjY2UtOTI0Zi0wZWI0YmY4YzgzYTEuanBn.png'" class="avatar-small">
-                        <p>Accuracy: {{ getProfile(selectedP2).accuracy }}%</p>
-                        <p>Win Ratio: {{ getProfile(selectedP2).winLossRatio }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <button class="start-btn" @click="startGame">START MATCH</button>
-        </div>
-
-        <!-- SCOREBOARD -->
-        <div v-else class="container scoreboard">
-            <header>
-                <div class="live">● LIVE</div>
+        <div class="app-wrapper">
+            <header class="main-header">
+                <div class="logo">PISHOT <span class="highlight">ARENA</span></div>
+                <nav v-if="!gameActive" class="nav-tabs">
+                    <button @click="currentView = 'lobby'" :class="{active: currentView === 'lobby'}"><i class="fas fa-gamepad"></i> Lobby</button>
+                    <button @click="currentView = 'stats'" :class="{active: currentView === 'stats'}"><i class="fas fa-chart-bar"></i> Stats</button>
+                </nav>
             </header>
 
-            <!-- Winner Overlay -->
-            <div v-if="winner" class="winner-overlay">
-                <img :src="winner.profileImage || 'https://via.placeholder.com/150'" class="avatar-large">
-                <h1>{{ winner.name }} WINS!</h1>
-                <button @click="finishGame">RECORD & EXIT</button>
-            </div>
+            <main>
+                <transition name="fade" mode="out-in">
+                    
+                    <!-- LOBBY -->
+                    <div v-if="currentView === 'lobby' && !gameActive" class="view-container">
+                        <div class="card create-card">
+                            <h3>New Player</h3>
+                            <div class="input-group">
+                                <input v-model="newName" placeholder="Enter Name">
+                                <label class="file-upload"><input type="file" @change="handleFileUpload"><i class="fas fa-camera"></i></label>
+                                <button class="btn-icon" @click="createProfile"><i class="fas fa-check"></i></button>
+                            </div>
+                        </div>
+                        <div class="match-setup">
+                            <div class="player-select-box">
+                                <label>PLAYER 1</label>
+                                <select v-model="selectedP1"><option :value="null">Select</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select>
+                                <div v-if="selectedP1" class="mini-stat-card"><img :src="getProfile(selectedP1).profileImage" class="avatar"><div>{{getProfile(selectedP1).accuracy}}% Acc</div></div>
+                            </div>
+                            <div class="vs-divider">VS</div>
+                            <div class="player-select-box">
+                                <label>PLAYER 2</label>
+                                <select v-model="selectedP2"><option :value="null">Select</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select>
+                                <div v-if="selectedP2" class="mini-stat-card"><img :src="getProfile(selectedP2).profileImage" class="avatar"><div>{{getProfile(selectedP2).accuracy}}% Acc</div></div>
+                            </div>
+                        </div>
+                        <button class="btn-primary start-btn" @click="startGame">LOCK IN & START</button>
+                    </div>
 
-            <div class="score-row">
-                <!-- P1 Card -->
-                <div class="card" :class="{leader: isLeader(p1Data)}">
-                    <img :src="p1Profile.profileImage || 'https://cdn.nba.com/headshots/nba/latest/1040x760/1449.png'" class="avatar">
-                    <h2>{{ p1Profile.name }}</h2>
-                    <div class="score">{{ p1Data.score }}</div>
-                </div>
-                
-                <div class="vs">VS</div>
+                    <!-- STATS -->
+                    <div v-else-if="currentView === 'stats' && !gameActive" class="view-container">
+                        <div class="stats-control"><select v-model="statsProfileId" @change="calculateNbaTwin"><option :value="null">-- Select Player --</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select></div>
+                        <div class="stats-grid">
+                            <div v-if="statsProfile" class="card profile-detail-card">
+                                <img :src="statsProfile.profileImage" class="avatar-large">
+                                <h2>{{statsProfile.name}} <span class="rank-tag">#{{statsProfile.rank}}</span></h2>
+                                <p>Acc: {{statsProfile.accuracy}}% | Win Rate: {{statsProfile.winLossRatio}}%</p>
+                            </div>
+                            <div v-if="nbaTwin" class="card nba-card">
+                                <div class="nba-label">NBA MATCH</div>
+                                <div class="nba-content"><img :src="`https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaTwin.id}.png`"><div><h3>{{nbaTwin.name}}</h3><div class="match-pct">{{nbaTwin.accuracy}}% ACC</div></div></div>
+                            </div>
+                        </div>
+                        <div class="card leaderboard-card">
+                            <h3>LEADERBOARD</h3>
+                            <table>
+                                <thead><tr><th>#</th><th>Player</th><th>Win%</th><th>Acc</th></tr></thead>
+                                <tbody>
+                                    <tr v-for="p in top10" :key="p.id" :class="{active: p.id === statsProfileId}">
+                                        <td class="rank-cell">{{p.rank}}</td>
+                                        <td><img :src="p.profileImage" class="avatar-tiny">{{p.name}}</td>
+                                        <td>{{p.winLossRatio}}%</td><td>{{p.accuracy}}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-                <!-- P2 Card -->
-                <div class="card" :class="{leader: isLeader(p2Data)}">
-                    <img :src="p2Profile.profileImage || 'https://www.usab.com/imgproxy/-AvpbjLzGRGH5tsHJROybQMh0x0T1rYboWbZk7y99wI/rs:fit:3000:0:0/g:ce/q:90/aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3VzYWItY29tLXByb2QvMjAyMS8wMi8wMDdmOGYwZC0yMTk0LTRjY2UtOTI0Zi0wZWI0YmY4YzgzYTEuanBn.png'" class="avatar">
-                    <h2>{{ p2Profile.name }}</h2>
-                    <div class="score">{{ p2Data.score }}</div>
-                </div>
-            </div>
+                    <!-- GAME -->
+                    <div v-else-if="gameActive" class="view-container game-view">
+                        <div class="live-badge">● LIVE MATCH</div>
+                        <div v-if="isTiebreak" class="tiebreak-alert">OVERTIME: FIRST TO 5 (WIN BY 2)</div>
+                        
+                        <div v-if="winner" class="winner-modal">
+                            <div class="modal-content">
+                                <div class="trophy-anim">🏆</div>
+                                <img :src="winner.profileImage" class="avatar-winner">
+                                <h1>{{winner.name}} WINS!</h1>
+                                <button class="btn-primary" @click="finishGame">RECORD RESULT</button>
+                            </div>
+                        </div>
+
+                        <div class="scoreboard-grid">
+                            <div class="score-card p1" :class="{leading: isLeader(p1Data)}">
+                                <img :src="p1Data.profileImage" class="avatar-game"><h2>{{p1Data.name}}</h2><div class="score-digit">{{p1Data.visualScore}}</div>
+                            </div>
+                            <div class="vs-badge">VS</div>
+                            <div class="score-card p2" :class="{leading: isLeader(p2Data)}">
+                                <img :src="p2Data.profileImage" class="avatar-game"><h2>{{p2Data.name}}</h2><div class="score-digit">{{p2Data.visualScore}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+            </main>
         </div>
-
     </div>
     <script src="app.js"></script>
 </body>
