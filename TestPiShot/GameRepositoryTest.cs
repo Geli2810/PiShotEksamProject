@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using PiShotProject;
 using PiShotProject.ClassDB;
+using PiShotProject.Models;
+using PiShotProject.Repositories;
 using System.Security.Cryptography;
 using System.Xml.Linq;
 

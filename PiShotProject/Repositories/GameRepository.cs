@@ -1,20 +1,21 @@
 ﻿using PiShotProject.ClassDB;
+using PiShotProject.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PiShotProject
+namespace PiShotProject.Repositories
 {
     public class GameRepository
     {
         private readonly PiShotDBContext _dbContext;
-            public GameRepository(PiShotDBContext dbContext)
+        public GameRepository(PiShotDBContext dbContext)
         {
             _dbContext = dbContext;
         }
-        
+
         public Game AddNewGame(Game game)
         {
             _dbContext.Games.Add(game);

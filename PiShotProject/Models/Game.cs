@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PiShotProject
+namespace PiShotProject.Models
 {
     public class Game
     {
@@ -24,9 +24,9 @@ namespace PiShotProject
         }
 
         public int Id { get { return id; } set { id = value; } }
-        public Profile? Profile1 { get {    return profile1; } set { profile1 = value; } }
-        public Profile? Profile2 { get {    return profile2; } set {        profile2 = value; } }
-        public int GameWinner { get {   return gameWinner; } set { gameWinner = value; } }
+        public Profile? Profile1 { get { return profile1; } set { profile1 = value; } }
+        public Profile? Profile2 { get { return profile2; } set { profile2 = value; } }
+        public int GameWinner { get { return gameWinner; } set { gameWinner = value; } }
 
     }
 }

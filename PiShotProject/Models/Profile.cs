@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PiShotProject
+namespace PiShotProject.Models
 {
     public class Profile
     {
@@ -12,7 +12,7 @@ namespace PiShotProject
         private string _profileImagePath;
         public const string DefaultProfileImagePath = "https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg";
 
-        public Profile(string name, string? profileImagePath = DefaultProfileImagePath) 
+        public Profile(string name, string? profileImagePath = DefaultProfileImagePath)
         {
             Name = name;
             ProfileImagePath = profileImagePath;
@@ -25,7 +25,7 @@ namespace PiShotProject
         public string Name
         {
             get { return _name; }
-            set 
+            set
             {
                 if (string.IsNullOrWhiteSpace(value))
                 {
@@ -35,7 +35,7 @@ namespace PiShotProject
                 {
                     throw new ArgumentOutOfRangeException("Name must be between 2 and 50 characters");
                 }
-                _name = value; 
+                _name = value;
             }
         }
 

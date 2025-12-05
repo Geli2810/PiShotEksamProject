@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using PiShotProject;
 using PiShotProject.ClassDB;
+using PiShotProject.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
