@@ -16,16 +16,13 @@ namespace BasketballApi.Controllers
         {
             using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
             {
-                // Reset: Active=1, Time=Now, Tiebreak=0, Winner=NULL
+                // UPDATED: No longer truncating tables. We just reset the CurrentGame state.
                 string query = @"
                     UPDATE CurrentGame 
                     SET Player1Id = @P1, Player2Id = @P2, IsActive = 1, StartTime = GETDATE(),
                         IsTiebreak = 0, TiebreakOffsetP1 = 0, TiebreakOffsetP2 = 0, CurrentWinnerId = NULL
-                    WHERE Id = 1;
-                    
-                    TRUNCATE TABLE Scores;
-                    TRUNCATE TABLE ShotAttempts;
-                ";
+                    WHERE Id = 1";
+
                 using (var cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@P1", req.Player1Id);
@@ -37,7 +34,7 @@ namespace BasketballApi.Controllers
             return Ok(new { msg = "Game Started" });
         }
 
-        // NEW: Called by Raspberry Pi when it detects 10 points
+        // Called by Raspberry Pi when it detects 10 points (or win condition)
         [HttpPost("declare_winner")]
         public IActionResult DeclareWinner([FromBody] EndGameRequest req)
         {

@@ -48,9 +48,10 @@ namespace BasketballApi.Controllers
             {
                 conn.Open();
 
-                // 1. Get Game Config
+                // 1. Get Game Config AND StartTime
                 string qGame = @"
-                    SELECT cg.Player1Id, cg.Player2Id, cg.IsTiebreak, cg.TiebreakOffsetP1, cg.TiebreakOffsetP2,
+                    SELECT cg.Player1Id, cg.Player2Id, cg.StartTime, cg.IsTiebreak, 
+                           cg.TiebreakOffsetP1, cg.TiebreakOffsetP2,
                            p1.Name as P1Name, p1.ProfileImage as P1Img,
                            p2.Name as P2Name, p2.ProfileImage as P2Img
                     FROM CurrentGame cg
@@ -61,6 +62,7 @@ namespace BasketballApi.Controllers
                 int p1Id = 0, p2Id = 0, off1 = 0, off2 = 0;
                 string p1Name = "P1", p2Name = "P2", p1Img = "", p2Img = "";
                 bool isTiebreak = false;
+                DateTime startTime = DateTime.MinValue;
 
                 using (var cmd = new SqlCommand(qGame, conn))
                 {
@@ -74,15 +76,22 @@ namespace BasketballApi.Controllers
                             isTiebreak = r["IsTiebreak"] != DBNull.Value && (bool)r["IsTiebreak"];
                             off1 = r["TiebreakOffsetP1"] != DBNull.Value ? (int)r["TiebreakOffsetP1"] : 0;
                             off2 = r["TiebreakOffsetP2"] != DBNull.Value ? (int)r["TiebreakOffsetP2"] : 0;
+
+                            if (r["StartTime"] != DBNull.Value)
+                            {
+                                startTime = (DateTime)r["StartTime"];
+                            }
                         }
                     }
                 }
 
-                // 2. Count TOTAL Scores
-                string qScores = "SELECT ProfileId, COUNT(*) as Cnt FROM Scores GROUP BY ProfileId";
+                // 2. Count Scores ONLY for this session
+                string qScores = "SELECT ProfileId, COUNT(*) as Cnt FROM Scores WHERE ScoredAt >= @GameStart GROUP BY ProfileId";
                 int total1 = 0, total2 = 0;
                 using (var cmd = new SqlCommand(qScores, conn))
                 {
+                    cmd.Parameters.AddWithValue("@GameStart", startTime);
+
                     using (var r = cmd.ExecuteReader())
                     {
                         while (r.Read())
@@ -94,12 +103,13 @@ namespace BasketballApi.Controllers
                     }
                 }
 
-                // 3. CHECK FOR TIEBREAK TRIGGER (10-10)
-                if (!isTiebreak && total1 == 10 && total2 == 10)
+                // 3. CHECK FOR TIEBREAK TRIGGER (5-5)
+                // If both reach 5, we activate Tiebreak and set offsets so visual score resets
+                if (!isTiebreak && total1 == 5 && total2 == 5)
                 {
-                    string setTb = "UPDATE CurrentGame SET IsTiebreak = 1, TiebreakOffsetP1 = 10, TiebreakOffsetP2 = 10 WHERE Id = 1";
+                    string setTb = "UPDATE CurrentGame SET IsTiebreak = 1, TiebreakOffsetP1 = 5, TiebreakOffsetP2 = 5 WHERE Id = 1";
                     using (var cmd = new SqlCommand(setTb, conn)) cmd.ExecuteNonQuery();
-                    isTiebreak = true; off1 = 10; off2 = 10;
+                    isTiebreak = true; off1 = 5; off2 = 5;
                 }
 
                 // 4. Return Data
