@@ -1,4 +1,4 @@
-﻿using PiShotProject.Models;
+﻿using PiShotProject.Models; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +12,10 @@ namespace PiShotProject.Interfaces
         void AddScore(int profileId);
         void AddAttempt(int profileId);
 
-        LiveScoreDTO GetLiveScore();
+        CurrentGame GetCurrentGameEntity();
+
+        (int P1Score, int P2Score) GetScoresSinceGameStart(int player1Id, int player2Id, DateTime gameStartTime);
+
         void UpdateTiebreakStatus(int p1Id, int p2Id);
     }
 }
