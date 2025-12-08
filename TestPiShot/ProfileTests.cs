@@ -1,5 +1,5 @@
 using Microsoft.Identity.Client;
-using PiShotProject;
+using PiShotProject.Models;
 
 namespace TestPiShot;
 
@@ -70,7 +70,7 @@ public class ProfileTests
     [TestMethod]
     public void TestProfileImagePath()
     {
-        Assert.AreEqual("https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg", profile.ProfileImagePath);
+        Assert.AreEqual("https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg", profile.ProfileImage);
     }
 
     //Constructor Test'
@@ -79,7 +79,7 @@ public class ProfileTests
     {
         Profile newProfile = new Profile();
         Assert.AreEqual("Default Name", newProfile.Name);
-        Assert.AreEqual("https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg", newProfile.ProfileImagePath);
+        Assert.AreEqual("https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg", newProfile.ProfileImage);
     }
 
 }

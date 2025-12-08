@@ -1,37 +1,32 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace PiShotProject.Models
 {
     public class Game
     {
-        public int Id { get; set; }
-        public int? Profile1Id { get; set; }
-        public Profile? Profile1 { get; set; }
-        public int? Profile2Id { get; set; }
-        public Profile? Profile2 { get; set; }
-        public int? WinnerId { get; set; }
-        public bool IsActive { get; set; } = true;
-        public DateTime StartTime { get; set; } = DateTime.Now;
-        public DateTime? EndTime { get; set; }
-        public void Finish(int winnerId)
+        private int id;
+        private Profile? profile1 = null;
+        private Profile? profile2 = null;
+        private int gameWinner = 0;
+
+        public Game() { }
+
+        public Game(int id, Profile? profile1, Profile? profile2, int gameWinner)
         {
-            if (!IsActive)
-                throw new InvalidOperationException("Game is already finished.");
-
-            if (winnerId != Profile1Id && winnerId != Profile2Id)
-                throw new ArgumentException("Winner is not part of this game.");
-
-            IsActive = false;
-            WinnerId = winnerId;
-            EndTime = DateTime.Now;
+            this.id = id;
+            this.profile1 = profile1;
+            this.profile2 = profile2;
+            this.gameWinner = gameWinner;
         }
-        public void Cancel()
-        {
-            if (!IsActive) return;
 
-            IsActive = false;
-            WinnerId = null;
-            EndTime = DateTime.Now;
-        }
+        public int Id { get { return id; } set { id = value; } }
+        public Profile? Profile1 { get { return profile1; } set { profile1 = value; } }
+        public Profile? Profile2 { get { return profile2; } set { profile2 = value; } }
+        public int GameWinner { get { return gameWinner; } set { gameWinner = value; } }
+
     }
 }

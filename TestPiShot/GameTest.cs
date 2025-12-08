@@ -1,4 +1,5 @@
 using PiShotProject;
+using PiShotProject.Models;
 
 namespace TestPiShot;
 
