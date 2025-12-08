@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BasketballApi.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using BasketballApi.Models;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
+using PiShotWebApi.DTO;
 
 namespace BasketballApi.Controllers
 {
@@ -11,6 +12,7 @@ namespace BasketballApi.Controllers
     public class GameController : ControllerBase
     {
         private readonly IGameService _gameService;
+        private readonly IGameRepostitory _repository;
 
         public GameController(IGameService gameService)
         {
@@ -24,9 +26,15 @@ namespace BasketballApi.Controllers
             return Ok(new { msg = "Game Started" });
         }
 
-        
+        [HttpPost("stop")]
+        public IActionResult StopGame()
+        {
+            _gameService.StopCurrentGame();
+            return Ok(new { msg = "Game Stopped" });
+        }
+
         [HttpPost("declare_winner")]
-        public IActionResult DeclareWinner([FromBody] EndGameRequest req)
+        public IActionResult DeclareWinner([FromBody] EndGameRequestDTO req)
         {
             _gameService.DeclareWinner(req.WinnerId);
             return Ok(new { msg = "Winner Declared" });
@@ -34,7 +42,7 @@ namespace BasketballApi.Controllers
 
         
         [HttpPost("finish")]
-        public IActionResult FinishGame([FromBody] EndGameRequest req)
+        public IActionResult FinishGame([FromBody] EndGameRequestDTO req)
         {
             try
             {
@@ -48,10 +56,24 @@ namespace BasketballApi.Controllers
         }
 
         [HttpGet("current")]
-        public IActionResult GetCurrent()
+        public ActionResult<GameStatusResponseDTO> GetCurrent()
         {
-            var status = _gameService.GetCurrentStatus();
-            return Ok(status);
+            return Ok(_gameService.GetCurrentStatus());
+        }
+
+        public GameStatusResponseDTO GetCurrentStatus()
+        {
+            var game = _repository.GetState();
+
+            return new GameStatusResponseDTO
+            {
+                IsActive = game?.IsActive ?? false,
+                P1_Id = game?.Player1Id ?? 0,
+                P2_Id = game?.Player2Id ?? 0,
+                CurrentWinnerId = game?.CurrentWinnerId,
+                WinnerName = game?.WinnerName,
+                WinnerImage = game?.WinnerImage
+            };
         }
     }
 }
