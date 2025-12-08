@@ -12,6 +12,7 @@ namespace PiShotProject.Interfaces
         void StartNewGame(StartGameRequest request);
         void DeclareWinner(int winnerId);
         void RecordGameResult(int winnerId);
+        void StopCurrentGame();
         GameStatusResponse GetCurrentStatus();
     }
 }

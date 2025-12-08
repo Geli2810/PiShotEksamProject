@@ -1,10 +1,5 @@
 ﻿using PiShotProject.Interfaces;
 using PiShotProject.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PiShotProject.Services
 {
@@ -19,21 +14,24 @@ namespace PiShotProject.Services
 
         public void DeclareWinner(int winnerId)
         {
-            _repository.UpdateCurrentWinner(winnerId);
+            var game = _repository.GetState();
+            if (game != null)
+            {
+                game.CurrentWinnerId = winnerId;
+                _repository.SaveState(game);
+            }
         }
 
         public GameStatusResponse GetCurrentStatus()
         {
-            var game = _repository.GetCurrentGame();
-
-            if (game == null) return new GameStatusResponse { IsActive = false };
+            var game = _repository.GetState();
 
             return new GameStatusResponse
             {
-                IsActive = game.IsActive,
-                P1_Id = game.Player1Id,
-                P2_Id = game.Player2Id,
-                CurrentWinnerId = game.CurrentWinnerId,
+                IsActive = game?.IsActive ?? false,
+                P1_Id = game?.Player1Id ?? 0,
+                P2_Id = game?.Player2Id ?? 0,
+                CurrentWinnerId = game?.CurrentWinnerId,
                 WinnerName = game.WinnerName,
                 WinnerImage = game.WinnerImage
             };
@@ -41,22 +39,52 @@ namespace PiShotProject.Services
 
         public void RecordGameResult(int winnerId)
         {
-            var currentGame = _repository.GetCurrentGame();
-            if (currentGame == null || !currentGame.IsActive)
+            var game = _repository.GetState();
+            if (game == null || !game.IsActive)
             {
-                throw new InvalidOperationException("No active game found.");
+                throw new Exception("No active game found");
             }
 
-            int loserId = (winnerId == currentGame.Player1Id) ? currentGame.Player2Id : currentGame.Player1Id;
+            int loserId = (winnerId == game.Player1Id) ? game.Player2Id : game.Player1Id;
 
-            _repository.AddGameResult(winnerId, loserId);
+            var result = new GameResult
+            {
+                WinnerId = winnerId,
+                LoserId = loserId,
+                PlayedOn = DateTime.UtcNow
+            };
+            _repository.AddResult(result);
 
-            _repository.ResetGame();
+            game.IsActive = false;
+            game.StartTime = null;
+            game.CurrentWinnerId = null;
+
+            _repository.SaveState(game);
         }
 
         public void StartNewGame(StartGameRequest request)
         {
-            _repository.StartGame(request.Player1Id, request.Player2Id);
+            var game = _repository.GetState();
+            if (game == null) return;
+
+            game.Player1Id = request.Player1Id;
+            game.Player2Id = request.Player2Id;
+            game.IsActive = true;
+            game.StartTime = DateTime.UtcNow;
+            game.CurrentWinnerId = null;
+
+            _repository.SaveState(game);
+        }
+
+        public void StopCurrentGame()
+        {
+            var game = _repository.GetState();
+            if (game == null) return;
+            game.IsActive = false;
+            game.StartTime = null;
+            game.CurrentWinnerId = null;
+
+            _repository.SaveState(game);
         }
     }
 }

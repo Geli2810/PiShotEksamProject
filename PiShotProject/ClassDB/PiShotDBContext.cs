@@ -15,7 +15,7 @@ namespace PiShotProject.ClassDB
         public PiShotDBContext(DbContextOptions<PiShotDBContext> options) : base(options)
         {
         }
-
+        public DbSet<Game> Games { get; set; }
         public DbSet<Profile> Profiles { get; set; }
         public DbSet<Score> Scores { get; set; }
         public DbSet<ShotAttempt> ShotAttempts { get; set; }
@@ -39,7 +39,7 @@ namespace PiShotProject.ClassDB
                 .WithMany()
                 .HasForeignKey(cg => cg.Player2Id)
                 .OnDelete(DeleteBehavior.Restrict);
-
+                
             modelBuilder.Entity<Score>()
                 .HasOne(s => s.Profile)
                 .WithMany()
@@ -61,6 +61,10 @@ namespace PiShotProject.ClassDB
                 .WithMany()
                 .HasForeignKey(gr => gr.LoserId)
                 .OnDelete(DeleteBehavior.Restrict);
+                
+            modelBuilder.Entity<CurrentGame>().HasData(
+                new CurrentGame { Id = 1, Player1Id = 0, Player2Id = 0, IsActive = false, StartTime = null, CurrentWinnerId = null }
+                );           
         }
     }
 }
