@@ -1,14 +1,12 @@
 ﻿using PiShotProject.ClassDB;
+using PiShotProject.Interfaces;
 using PiShotProject.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PiShotProject.Repositories
 {
-    public class ProfileRepository
+    public class ProfileRepository : IProfileRepository
     {
         private readonly PiShotDBContext _dbContext;
 
@@ -22,46 +20,41 @@ namespace PiShotProject.Repositories
             return _dbContext.Profiles.ToList();
         }
 
-        public Profile AddProfile(Profile profile)
-        {
-            profile.Id = 0;
-            if (profile.ProfileImagePath == null)
-            {
-                profile.ProfileImagePath = Profile.DefaultProfileImagePath;
-            }
-            _dbContext.Profiles.Add(profile);
-            _dbContext.SaveChanges();
-            return profile;
-        }
-
         public Profile? GetProfileById(int id)
         {
             return _dbContext.Profiles.FirstOrDefault(p => p.Id == id);
         }
 
+        public Profile AddProfile(Profile profile)
+        {
+            profile.Id = 0;
+            if (string.IsNullOrEmpty(profile.ProfileImage))
+                profile.ProfileImage = Profile.DefaultProfileImagePath;
+
+            _dbContext.Profiles.Add(profile);
+            _dbContext.SaveChanges();
+            return profile;
+        }
+
         public Profile? UpdateProfile(Profile profile, int id)
         {
-            Profile? existingProfile = GetProfileById(id);
-            if (existingProfile == null)
-            {
-                return null;
-            }
-            existingProfile.Name = profile.Name;
-            existingProfile.ProfileImagePath = profile.ProfileImagePath;
+            var existing = GetProfileById(id);
+            if (existing == null) return null;
+
+            existing.Name = profile.Name;
+            existing.ProfileImage = profile.ProfileImage;
             _dbContext.SaveChanges();
-            return existingProfile;
+            return existing;
         }
 
         public Profile? DeleteProfile(int id)
         {
-            Profile? profileToDelete = GetProfileById(id);
-            if (profileToDelete == null)
-            {
-                return null;
-            }
-            _dbContext.Profiles.Remove(profileToDelete);
+            var existing = GetProfileById(id);
+            if (existing == null) return null;
+
+            _dbContext.Profiles.Remove(existing);
             _dbContext.SaveChanges();
-            return profileToDelete;
+            return existing;
         }
     }
 }
