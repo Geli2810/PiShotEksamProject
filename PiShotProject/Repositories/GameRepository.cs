@@ -1,4 +1,8 @@
-﻿using PiShotProject.ClassDB;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Win32.SafeHandles;
+using PiShotProject.ClassDB;
+using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using System;
 using System.Collections.Generic;
@@ -8,56 +12,105 @@ using System.Threading.Tasks;
 
 namespace PiShotProject.Repositories
 {
-    public class GameRepository
+    public class GameRepository : IGameRepostitory
     {
-        private readonly PiShotDBContext _dbContext;
-        public GameRepository(PiShotDBContext dbContext)
+        private readonly string _connectionString;
+
+        public GameRepository(IConfiguration config)
         {
-            _dbContext = dbContext;
+            _connectionString = config.GetConnectionString("DefaultConnection");
         }
 
-        public Game AddNewGame(Game game)
+        public void AddGameResult(int winnerId, int loserId)
         {
-            _dbContext.Games.Add(game);
-            _dbContext.SaveChanges();
-            return game;
-        }
-        public List<Game> GetAllGames()
-        {
-            return _dbContext.Games.ToList();
-        }
-        public Game? GetById(int id)
-        {
-            return _dbContext.Games.FirstOrDefault(p => p.Id == id);
-        }
-
-        public Game SetWinner(Game game, int score1, int score2)
-        {
-            if (score1 == score2)
-                throw new InvalidOperationException("Tie is not allowed");
-
-            game.GameWinner = score1 > score2
-                ? game.Profile1!.Id
-                : game.Profile2!.Id;
-
-            _dbContext.Games.Update(game);
-            _dbContext.SaveChanges();
-
-            return game;
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                var query = "INSERT INTO GameResults (WinnerId, LoserId) VALUES (@Win, @Lose)";
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Win", winnerId);
+                    cmd.Parameters.AddWithValue("@Lose", loserId);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
-        public List<Game> GetGamesByWinner(int profileId)
+        public CurrentGame GetCurrentGame()
         {
-            return _dbContext.Games
-                .Where(g => g.GameWinner == profileId)
-                .ToList();
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                var query = @"
+                    SELECT cg.IsActive, cg.Player1Id, cg.Player2Id, cg.CurrentWinnerId,
+                           w.Name as WinnerName, w.ProfileImage as WinnerImage
+                    FROM CurrentGame cg 
+                    LEFT JOIN Profiles w ON cg.CurrentWinnerId = w.Id
+                    WHERE cg.Id = 1";
+
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        if (r.Read())
+                        {
+                            return new CurrentGame
+                            {
+                                IsActive = (bool)r["IsActive"],
+                                Player1Id = r["Player1Id"] != DBNull.Value ? (int)r["Player1Id"] : 0,
+                                Player2Id = r["Player2Id"] != DBNull.Value ? (int)r["Player2Id"] : 0,
+                                CurrentWinnerId = r["CurrentWinnerId"] != DBNull.Value ? (int?)r["CurrentWinnerId"] : null,
+                                WinnerName = r["WinnerName"]?.ToString(),
+                                WinnerImage = r["WinnerImage"]?.ToString()
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
-        public List<Game> GetGamesForProfile(int profileId)
+        public void ResetGame()
         {
-            return _dbContext.Games
-                .Where(g => g.Profile1!.Id == profileId || g.Profile2!.Id == profileId)
-                .ToList();
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                var query = "UPDATE CurrentGame SET IsActive = 0, StartTime = NULL, IsTiebreak = 0, CurrentWinnerId = NULL WHERE Id = 1";
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void StartGame(int player1Id, int player2Id)
+        {
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                var query = @"UPDATE CurrentGame SET Player1Id = @P1, PLayer2Id = @P2, IsActive = 1, StartTime = GETDATE(), IsTiebreak = 0, TiebreakOffsetP1 = 0, TiebreakOffsetP2 = 0, CurrentWinnerId = NULL WHERE Id = 1";
+
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@P1", player1Id);
+                    cmd.Parameters.AddWithValue("@P2", player2Id);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateCurrentWinner(int winnerId)
+        {
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                var query = "UPDATE CurrentGame SET CurrentWinnerId = @Win WHERE Id = 1";
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Win", winnerId);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
     }
 }
