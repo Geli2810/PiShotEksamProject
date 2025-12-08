@@ -27,8 +27,8 @@ public class ProfileRepositoryTests
         // 3. Seed the database with initial data
         var profiles = new List<Profile>
         {
-            new Profile { Id = 1, Name = "Bob", ProfileImagePath = "Bob.png" },
-            new Profile { Id = 2, Name = "Alice", ProfileImagePath = "Alice.png" }
+            new Profile { Id = 1, Name = "Bob", ProfileImage = "Bob.png" },
+            new Profile { Id = 2, Name = "Alice", ProfileImage = "Alice.png" }
         };
 
         _dbContext.Profiles.AddRange(profiles);
@@ -41,7 +41,7 @@ public class ProfileRepositoryTests
         IEnumerable<Profile> profile = _repo.GetAllProfiles();
         Assert.AreEqual(1, profile.First().Id);
         Assert.AreEqual("Bob", profile.First().Name);
-        Assert.AreEqual("Bob.png", profile.First().ProfileImagePath);
+        Assert.AreEqual("Bob.png", profile.First().ProfileImage);
 
         Assert.AreEqual(2, profile.Count());
     }
@@ -49,7 +49,7 @@ public class ProfileRepositoryTests
     [TestMethod]
     public void AddTest()
     {
-        _repo.AddProfile(new Profile { Name = "Bobob", ProfileImagePath = "Bobob.png" });
+        _repo.AddProfile(new Profile { Name = "Bobob", ProfileImage = "Bobob.png" });
         IEnumerable<Profile> allProfile = _repo.GetAllProfiles();
         Assert.AreEqual(3, allProfile.Count());
     }
@@ -57,14 +57,14 @@ public class ProfileRepositoryTests
     [TestMethod]
     public void AddExceptionTest()
     {
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => _repo.AddProfile(new Profile { Name = "B", ProfileImagePath = "path.ipatj"}));
-        Assert.ThrowsException<ArgumentException>(() => _repo.AddProfile(new Profile { Name = null, ProfileImagePath = "path.ipatj" }));
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() => _repo.AddProfile(new Profile { Name = "B", ProfileImage = "path.ipatj"}));
+        Assert.ThrowsException<ArgumentException>(() => _repo.AddProfile(new Profile { Name = null, ProfileImage = "path.ipatj" }));
     }
 
     [TestMethod]
     public void GetByIdTest()
     {
-        var p = _repo.AddProfile(new Profile { Name = "Bob", ProfileImagePath = "Bob.png" });
+        var p = _repo.AddProfile(new Profile { Name = "Bob", ProfileImage = "Bob.png" });
         Profile? profile = _repo.GetProfileById(p.Id);
         Assert.IsNotNull(profile);
         Assert.IsNull(_repo.GetProfileById(-1));
@@ -73,20 +73,20 @@ public class ProfileRepositoryTests
     [TestMethod]
     public void UpdateTest()
     {
-        Profile p = _repo.AddProfile(new Profile { Name = "Bøg", ProfileImagePath = "Bøg.png"});
-        Profile? profile = _repo.UpdateProfile(new Profile { Name = "Bok", ProfileImagePath = "Bok.png"}, p.Id);
+        Profile p = _repo.AddProfile(new Profile { Name = "Bøg", ProfileImage = "Bøg.png"});
+        Profile? profile = _repo.UpdateProfile(new Profile { Name = "Bok", ProfileImage = "Bok.png"}, p.Id);
         Assert.IsNotNull(profile);
         Profile? profile2 = _repo.GetProfileById(profile.Id);
         Assert.AreEqual("Bok", profile2.Name);
 
-        Assert.IsNull(_repo.UpdateProfile(new Profile { Name = "Buk", ProfileImagePath = "Buk.png" }, -1));
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => _repo.UpdateProfile(new Profile { Name = "a", ProfileImagePath = "aaa.png"}, profile2.Id));
+        Assert.IsNull(_repo.UpdateProfile(new Profile { Name = "Buk", ProfileImage = "Buk.png" }, -1));
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() => _repo.UpdateProfile(new Profile { Name = "a", ProfileImage = "aaa.png"}, profile2.Id));
     }
 
     [TestMethod]
     public void DeleteTest()
     {
-        Profile p = _repo.AddProfile(new Profile { Name = "Jens AI", ProfileImagePath = "JensAI.png"});
+        Profile p = _repo.AddProfile(new Profile { Name = "Jens AI", ProfileImage = "JensAI.png"});
         Assert.IsNotNull(p);
         Assert.AreEqual("Jens AI", p.Name);
         Assert.AreEqual(3, p.Id);
