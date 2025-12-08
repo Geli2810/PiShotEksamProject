@@ -3,75 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PiShot Eksam Project</title>
+    <title>PiShot Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-    <div id="app">
-        <section class="create-profile">
-            <h2>Create New Profile</h2>
-            <form @submit.prevent="createProfile">
-                <input type="text" v-model="newProfile.name" placeholder="Profile Name" required>
+    <div id="app" v-cloak>
+        <div class="app-wrapper">
+            <header class="main-header">
+                <div class="logo">PISHOT <span class="highlight">ARENA</span></div>
+                <nav v-if="!gameActive" class="nav-tabs">
+                    <button @click="currentView = 'lobby'" :class="{active: currentView === 'lobby'}"><i class="fas fa-gamepad"></i> Lobby</button>
+                    <button @click="currentView = 'profiles'" :class="{active: currentView === 'profiles'}"><i class="fas fa-users"></i> Profiles</button>
+                    <button @click="currentView = 'stats'" :class="{active: currentView === 'stats'}"><i class="fas fa-chart-bar"></i> Stats</button>
+                </nav>
+            </header>
 
-                <div class="image-picker">
-                    <label>Select a Profile Picture:</label>
-                    <div class="avatar-option" :class="{ 'selected': selectedImage === '' && !newProfile.profileImagePath.trim() }" @click="selectedImage = ''; newProfile.profileImagePath = ''" title="No Image">
-                        <span class="no-image-placeholder">🚫</span>
+            <main>
+                <transition name="fade" mode="out-in">
+                    
+                    <div v-if="currentView === 'lobby' && !gameActive" class="view-container">
+                        <div class="card match-setup-card">
+                            <h3>START MATCH</h3>
+                            <div class="match-setup">
+                                <div class="player-select-box">
+                                    <label>PLAYER 1</label>
+                                    <select v-model="selectedP1"><option :value="null">Select</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select>
+                                    <div v-if="selectedP1" class="mini-stat-card"><img :src="getProfile(selectedP1).profileImage" class="avatar"><div>{{getProfile(selectedP1).accuracy}}% Acc</div></div>
+                                </div>
+                                <div class="vs-divider">VS</div>
+                                <div class="player-select-box">
+                                    <label>PLAYER 2</label>
+                                    <select v-model="selectedP2"><option :value="null">Select</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select>
+                                    <div v-if="selectedP2" class="mini-stat-card"><img :src="getProfile(selectedP2).profileImage" class="avatar"><div>{{getProfile(selectedP2).accuracy}}% Acc</div></div>
+                                </div>
+                            </div>
+                            <button class="btn-primary start-btn" @click="startGame">LOCK IN & START</button>
+                        </div>
                     </div>
 
-                    <div v-for="imagePath in hardcodedImages" :key="imagePath" class="avatar-option" :class="{ 'selected': selectedImage === imagePath && !newProfile.profileImagePath.trim() }" @click="selectedImage = imagePath; newProfile.profileImagePath = ''">
-                        <img :src="imagePath" alt="Profile Avatar" width="50" height="50">
+                    <div v-else-if="currentView === 'profiles' && !gameActive" class="view-container">
+                        <div class="card create-card">
+                            <h3>Create New Player</h3>
+                            <div class="input-group">
+                                <input v-model="newName" placeholder="Enter Name">
+                                <label class="file-upload"><input type="file" @change="handleFileUpload"><i class="fas fa-camera"></i></label>
+                                <button class="btn-icon" @click="createProfile"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="profiles-grid">
+                            <div v-for="p in profiles" :key="p.id" class="card profile-manage-card">
+                                <div class="profile-info">
+                                    <img :src="p.profileImage" class="avatar">
+                                    <div class="profile-text">
+                                        <h4>{{p.name}}</h4>
+                                        <span class="sub-text">ID: {{p.id}}</span>
+                                    </div>
+                                </div>
+                                <div class="profile-actions">
+                                    <button class="action-btn edit" @click="openEditModal(p)"><i class="fas fa-pen"></i></button>
+                                    <button class="action-btn delete" @click="deleteProfile(p.id)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else-if="currentView === 'stats' && !gameActive" class="view-container">
+                        <div class="stats-control"><select v-model="statsProfileId" @change="calculateNbaTwin"><option :value="null">-- Select Player --</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select></div>
+                        <div class="stats-grid">
+                            <div v-if="statsProfile" class="card profile-detail-card">
+                                <img :src="statsProfile.profileImage" class="avatar-large">
+                                <h2>{{statsProfile.name}} <span class="rank-tag">#{{statsProfile.rank}}</span></h2>
+                                <p>Acc: {{statsProfile.accuracy}}% | Win Rate: {{statsProfile.winLossRatio}}%</p>
+                            </div>
+                            <div v-if="nbaTwin" class="card nba-card">
+                                <div class="nba-label">NBA MATCH</div>
+                                <div class="nba-content"><img :src="`https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaTwin.id}.png`"><div><h3>{{nbaTwin.name}}</h3><div class="match-pct">{{nbaTwin.accuracy}}% ACC</div></div></div>
+                            </div>
+                        </div>
+                        <div class="card leaderboard-card">
+                            <h3>LEADERBOARD</h3>
+                            <table>
+                                <thead><tr><th>#</th><th>Player</th><th>Win%</th><th>Acc</th></tr></thead>
+                                <tbody>
+                                    <tr v-for="p in top10" :key="p.id" :class="{active: p.id === statsProfileId}">
+                                        <td class="rank-cell">{{p.rank}}</td>
+                                        <td><img :src="p.profileImage" class="avatar-tiny">{{p.name}}</td>
+                                        <td>{{p.winLossRatio}}%</td><td>{{p.accuracy}}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div v-else-if="gameActive" class="view-container game-view">
+                        <div class="live-badge">● LIVE MATCH</div>
+                        <div v-if="isTiebreak" class="tiebreak-alert">OVERTIME: FIRST TO 5 (WIN BY 2)</div>
+                        
+                        <div v-if="winner" class="winner-modal">
+                            <div class="modal-content">
+                                <div class="trophy-anim">🏆</div>
+                                <img :src="winner.profileImage" class="avatar-winner">
+                                <h1>{{winner.name}} WINS!</h1>
+                                <button class="btn-primary" @click="finishGame">RECORD RESULT</button>
+                            </div>
+                        </div>
+
+                        <div class="scoreboard-grid">
+                            <div class="score-card p1" :class="{leading: isLeader(p1Data)}">
+                                <img :src="p1Data.profileImage" class="avatar-game"><h2>{{p1Data.name}}</h2><div class="score-digit">{{p1Data.visualScore}}</div>
+                            </div>
+                            <div class="vs-badge">VS</div>
+                            <div class="score-card p2" :class="{leading: isLeader(p2Data)}">
+                                <img :src="p2Data.profileImage" class="avatar-game"><h2>{{p2Data.name}}</h2><div class="score-digit">{{p2Data.visualScore}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+            </main>
+
+            <div v-if="editingProfile" class="modal-overlay">
+                <div class="modal-box">
+                    <h3>Edit Profile</h3>
+                    <div class="input-group vertical">
+                        <label>Name</label>
+                        <input v-model="editingProfile.name">
+                        <label>New Image (Optional)</label>
+                        <label class="file-upload full-width"><input type="file" @change="handleEditFileUpload"><i class="fas fa-camera"></i> Upload New</label>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-cancel" @click="editingProfile = null">Cancel</button>
+                        <button class="btn-primary" @click="saveProfileUpdate">Save Changes</button>
                     </div>
                 </div>
+            </div>
 
-                <button type="submit">Create Profile</button>
-            </form>
-        </section>
-
-        <hr>
-
-        <section class="profile-list">
-            <h2>All Profiles (Total: {{ profiles.length }})</h2>
-            <div v-if="loading" class="loading">Loading profiles...</div>
-            <div v-else-if="profiles.length === 0" class="no-profiles">No profiles found. Create one above!</div>
-            <ul v-else>
-                <li v-for="profile in profiles" :key="profile.id">
-                    <div class="profile-display">
-                        <img v-if="profile.profileImagePath" :src="profile.profileImagePath" alt="Profile Picture" width="50" height="50" class="profile-image">
-                        <div v-else class="profile-image-placeholder">
-                            <span>{{ isEditing(profile.id) ? profileToEdit.name.charAt(0) : profile.name.charAt(0) }}</span>
-                        </div>
-                        <strong v-if="!isEditing(profile.id)">{{ profile.name }}</strong>
-                        <input v-else type="text" v-model="profileToEdit.name" placeholder="New Profile Name" required>
-                    </div>
-                    <div class="actions">
-                        <button v-if="!isEditing(profile.id)" @click="startUpdate(profile)" class="update-btn">Edit</button>
-                        <button v-else @click="saveUpdate(profile.id)" class="update-btn save-btn">Save</button>
-                        <button v-if="isEditing(profile.id)" @click="cancelUpdate" class="delete-btn">Cancel</button>
-
-                        <button v-else @click="deleteProfile(profile.id, profile.name)" class="delete-btn">Delete</button>
-                    </div>
-
-                    <div v-if="isEditing(profile.id)" class="edit-section">
-                        <label>Change Profile Picture:</label>
-                        <div class="image-picker-update">
-                            <div class="avatar-option" :class="{ 'selected': profileToEdit.profileImagePath === '' }" @click="profileToEdit.profileImagePath = ''" title="No Image">
-                                <span class="no-image-placeholder">🚫</span>
-                            </div>
-                            <div v-for="imagePath in hardcodedImages" :key="imagePath" class="avatar-option" :class="{ 'selected': profileToEdit.profileImagePath === imagePath }" @click="profileToEdit.profileImagePath = imagePath">
-                                <img :src="imagePath" alt="Profile Avatar" width="50" height="50">
-                            </div>
-                        </div>
-                    </div>
-                </li>
-            </ul>
-        </section>
-
-        <div v-if="message" :class="['message', messageType]">{{ message }}</div>
+        </div>
     </div>
-
-    <script src="index.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
