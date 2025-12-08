@@ -60,19 +60,7 @@ namespace BasketballApi.Controllers
             return Ok(_gameService.GetCurrentStatus());
         }
 
-        public GameStatusResponseDTO GetCurrentStatus()
-        {
-            var game = _repository.GetState();
-
-            return new GameStatusResponseDTO
-            {
-                IsActive = game?.IsActive ?? false,
-                P1_Id = game?.Player1Id ?? 0,
-                P2_Id = game?.Player2Id ?? 0,
-                CurrentWinnerId = game?.CurrentWinnerId,
-                WinnerName = game?.WinnerName,
-                WinnerImage = game?.WinnerImage
-            };
-        }
+        
+        
     }
 }
