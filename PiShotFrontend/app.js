@@ -3,7 +3,7 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
-            apiUrl: "https://localhost:7060/api/profiles",
+            apiUrl: "https://pishot-project-hqd6ffa0gvejbufu.canadacentral-01.azurewebsites.net/api/PiShot",
             
             currentView: 'lobby', // Standard start
             gameActive: false,
