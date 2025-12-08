@@ -22,5 +22,13 @@ namespace PiShotProject.Models
 
         public Profile Player1 { get; set; }
         public Profile Player2 { get; set; }
+        public string WinnerName
+        {
+            get; set;
+        }
+        public string WinnerImage
+        {
+            get; set;
+        }
     }
 }

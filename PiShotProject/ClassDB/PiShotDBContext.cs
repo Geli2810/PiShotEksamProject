@@ -15,7 +15,6 @@ namespace PiShotProject.ClassDB
         public PiShotDBContext(DbContextOptions<PiShotDBContext> options) : base(options)
         {
         }
-        public DbSet<Game> Games { get; set; }
         public DbSet<Profile> Profiles { get; set; }
         public DbSet<Score> Scores { get; set; }
         public DbSet<ShotAttempt> ShotAttempts { get; set; }

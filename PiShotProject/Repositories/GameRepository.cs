@@ -24,7 +24,7 @@ namespace PiShotProject.Repositories
 
         public CurrentGame? GetState()
         {
-            return _context.CurrentGames.Include(g => g.WinnerName).FirstOrDefault(g => g.Id == 1);
+            return _context.CurrentGame.Include(g => g.WinnerName).FirstOrDefault(g => g.Id == 1);
         }
 
         public void AddResult(GameResult result)
@@ -35,7 +35,7 @@ namespace PiShotProject.Repositories
 
         public void SaveState(CurrentGame game)
         {
-            _context.CurrentGames.Update(game);
+            _context.CurrentGame.Update(game);
             _context.SaveChanges();
         }
     }

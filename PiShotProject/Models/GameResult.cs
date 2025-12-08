@@ -11,6 +11,10 @@ namespace PiShotProject.Models
         public int Id { get; set; }
         public int WinnerId { get; set; }
         public int LoserId { get; set; }
+
+        public Profile Loser { get; set; }
+        public Profile Winner { get; set; }
+
         public DateTime PlayedOn { get; set; } = DateTime.UtcNow;
     }
 }

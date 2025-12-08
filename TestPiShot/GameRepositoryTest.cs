@@ -13,7 +13,7 @@ public class GameRepositoryTest
 
     private PiShotDBContext _dbContext;
     private GameRepository _gameRepository;
-    private Game _game;
+    //private Game _game;
     private Profile _p1;
     private Profile _p2;
 
@@ -35,11 +35,11 @@ public class GameRepositoryTest
         _dbContext.Profiles.Add(_p2);
         _dbContext.SaveChanges();
 
-        _game = new Game
-        {
-            Profile1 = _p1,
-            Profile2 = _p2
-        };
+       // _game = new Game
+       // {
+       //     Profile1 = _p1,
+       //     Profile2 = _p2
+       // };
 
     }
 
