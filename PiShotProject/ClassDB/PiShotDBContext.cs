@@ -1,7 +1,5 @@
-﻿// Fil: PiShotProject.ClassDB/PiShotDBContext.cs (OPDATERET)
-
-using Microsoft.EntityFrameworkCore;
-using PiShotProject.Models; // VIGTIGT: Brug Models i stedet for Entities
+﻿using Microsoft.EntityFrameworkCore;
+using PiShotProject.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +13,6 @@ namespace PiShotProject.ClassDB
         public PiShotDBContext(DbContextOptions<PiShotDBContext> options) : base(options)
         {
         }
-        public DbSet<Game> Games { get; set; }
         public DbSet<Profile> Profiles { get; set; }
         public DbSet<Score> Scores { get; set; }
         public DbSet<ShotAttempt> ShotAttempts { get; set; }
