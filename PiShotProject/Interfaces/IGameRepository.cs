@@ -1,12 +1,16 @@
 ﻿using PiShotProject.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace PiShotProject.Interfaces
 {
     public interface IGameRepository
     {
-        Game StartGame(int p1Id, int p2Id);
-        Game? GetActiveGame();
-        void FinishGame(int gameId, int winnerId);
-        void ResetGame(int gameId);
+        CurrentGame? GetState();
+        void SaveState(CurrentGame game);
+        void AddResult(GameResult result);
     }
 }

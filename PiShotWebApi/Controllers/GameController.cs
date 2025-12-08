@@ -1,5 +1,4 @@
-﻿using BasketballApi.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
@@ -12,7 +11,7 @@ namespace BasketballApi.Controllers
     public class GameController : ControllerBase
     {
         private readonly IGameService _gameService;
-        private readonly IGameRepostitory _repository;
+        private readonly IGameRepository _repository;
 
         public GameController(IGameService gameService)
         {

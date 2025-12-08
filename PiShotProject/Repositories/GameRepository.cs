@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace PiShotProject.Repositories
 {
-    public class GameRepository : IGameRepostitory
+    public class GameRepository : IGameRepository
     {
         private readonly PiShotDBContext _context;
 
@@ -24,7 +24,7 @@ namespace PiShotProject.Repositories
 
         public CurrentGame? GetState()
         {
-            return _context.CurrentGame.Include(g => g.Winner).FirstOrDefault(g => g.Id == 1);
+            return _context.CurrentGame.Include(g => g.WinnerName).FirstOrDefault(g => g.Id == 1);
         }
 
         public void AddResult(GameResult result)

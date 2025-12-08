@@ -1,4 +1,4 @@
-﻿namespace BasketballApi.Models
+﻿namespace PiShotWebApi.DTO
 {
     public class ProfileDTO
     {

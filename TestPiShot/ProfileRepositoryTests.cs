@@ -11,29 +11,29 @@ public class ProfileRepositoryTests
     private ProfileRepository _repo;
     private PiShotDBContext _dbContext;
 
-    [TestInitialize]
-    public void Setup()
-    {
-        var options = new DbContextOptionsBuilder<PiShotDBContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
+    //[TestInitialize]
+    //public void Setup()
+    //{
+    //    var options = new DbContextOptionsBuilder<PiShotDBContext>()
+    //        .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+    //        .Options;
 
-        // 2. Create the DbContext and Repository
-        _dbContext = new PiShotDBContext(options);
-        _dbContext.Database.EnsureCreated();
+    //    // 2. Create the DbContext and Repository
+    //    _dbContext = new PiShotDBContext(options);
+    //    _dbContext.Database.EnsureCreated();
 
-        _repo = new ProfileRepository(_dbContext);
+    //    _repo = new ProfileRepository(_dbContext);
 
-        // 3. Seed the database with initial data
-        var profiles = new List<Profile>
-        {
-            new Profile { Id = 1, Name = "Bob", ProfileImage = "Bob.png" },
-            new Profile { Id = 2, Name = "Alice", ProfileImage = "Alice.png" }
-        };
+    //    // 3. Seed the database with initial data
+    //    var profiles = new List<Profile>
+    //    {
+    //        new Profile { Id = 1, Name = "Bob", ProfileImage = "Bob.png" },
+    //        new Profile { Id = 2, Name = "Alice", ProfileImage = "Alice.png" }
+    //    };
 
-        _dbContext.Profiles.AddRange(profiles);
-        _dbContext.SaveChanges();
-    }
+    //    _dbContext.Profiles.AddRange(profiles);
+    //    _dbContext.SaveChanges();
+    //}
 
     //[TestMethod]
     //public void GetAllTest()

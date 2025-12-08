@@ -14,7 +14,7 @@ public class ProfileTests
         var profile = new Profile("Test User", null);
 
         // Assert
-        Assert.AreEqual(Profile.DefaultProfileImagePath, profile.ProfileImagePath);
+        Assert.AreEqual(Profile.DefaultProfileImagePath, profile.ProfileImage);
     }
 
     [TestMethod]

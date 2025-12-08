@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BasketballApi.Models;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
+using PiShotWebApi.DTO;
 
 namespace BasketballApi.Controllers
 {

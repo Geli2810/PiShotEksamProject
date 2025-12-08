@@ -9,9 +9,9 @@ namespace PiShotProject.Services
         private readonly string _hello = "Hello World";
 
 
-        private readonly IGameRepostitory _repository;
+        private readonly IGameRepository _repository;
 
-        public GameService(IGameRepostitory repository)
+        public GameService(IGameRepository repository)
         {
             _repository = repository;
         }

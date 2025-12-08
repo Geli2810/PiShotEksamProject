@@ -13,42 +13,42 @@ public class GameRepositoryTest
 
     private PiShotDBContext _dbContext;
     private GameRepository _gameRepository;
-    private Game _game;
+    //private Game _game;
     private Profile _p1;
     private Profile _p2;
 
-    [TestInitialize]
-    public void Init()
-    {
-        var options = new DbContextOptionsBuilder<PiShotDBContext>().UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+    //[TestInitialize]
+    //public void Init()
+    //{
+    //    var options = new DbContextOptionsBuilder<PiShotDBContext>().UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
 
-        .Options;
+    //    .Options;
 
-        _dbContext = new PiShotDBContext(options);
+    //    _dbContext = new PiShotDBContext(options);
 
-        _gameRepository = new GameRepository(_dbContext);
+    //    _gameRepository = new GameRepository(_dbContext);
 
-        _p1 = new Profile("Jens") { Id = 1 };
-        _p2 = new Profile("Jensine") { Id = 2 };
+    //    _p1 = new Profile("Jens") { Id = 1 };
+    //    _p2 = new Profile("Jensine") { Id = 2 };
 
-        _dbContext.Profiles.Add(_p1);
-        _dbContext.Profiles.Add(_p2);
-        _dbContext.SaveChanges();
+    //    _dbContext.Profiles.Add(_p1);
+    //    _dbContext.Profiles.Add(_p2);
+    //    _dbContext.SaveChanges();
 
-        _game = new Game
-        {
-            Profile1 = _p1,
-            Profile2 = _p2
-        };
+    //    _game = new Game
+    //    {
+    //        Profile1 = _p1,
+    //        Profile2 = _p2
+    //    };
 
-    }
+    //}
 
-    [TestCleanup]
-    public void Cleanup()
-    {
-        _dbContext.Database.EnsureDeleted();
-        _dbContext.Dispose(); 
-    }
+    //[TestCleanup]
+    //public void Cleanup()
+    //{
+    //    _dbContext.Database.EnsureDeleted();
+    //    _dbContext.Dispose(); 
+    //}
 
     //[TestMethod]
     //public void GameProfilesAreAssignedCorrectly()
