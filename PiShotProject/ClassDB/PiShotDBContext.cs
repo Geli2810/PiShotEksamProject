@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PiShotProject.Models;
+﻿// Fil: PiShotProject.ClassDB/PiShotDBContext.cs (OPDATERET)
+
+using Microsoft.EntityFrameworkCore;
+using PiShotProject.Models; // VIGTIGT: Brug Models i stedet for Entities
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +17,50 @@ namespace PiShotProject.ClassDB
         }
 
         public DbSet<Profile> Profiles { get; set; }
+        public DbSet<Score> Scores { get; set; }
+        public DbSet<ShotAttempt> ShotAttempts { get; set; }
+        public DbSet<CurrentGame> CurrentGame { get; set; }
+        public DbSet<GameResult> GameResults { get; set; }
 
-        public DbSet<Game>Games { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CurrentGame>()
+                .Property(cg => cg.Id)
+                .ValueGeneratedNever();
+
+            modelBuilder.Entity<CurrentGame>()
+                .HasOne(cg => cg.Player1)
+                .WithMany()
+                .HasForeignKey(cg => cg.Player1Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CurrentGame>()
+                .HasOne(cg => cg.Player2)
+                .WithMany()
+                .HasForeignKey(cg => cg.Player2Id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Score>()
+                .HasOne(s => s.Profile)
+                .WithMany()
+                .HasForeignKey(s => s.ProfileId);
+
+            modelBuilder.Entity<ShotAttempt>()
+                .HasOne(s => s.Profile)
+                .WithMany()
+                .HasForeignKey(s => s.ProfileId);
+
+            modelBuilder.Entity<GameResult>()
+                .HasOne(gr => gr.Winner)
+                .WithMany()
+                .HasForeignKey(gr => gr.WinnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GameResult>()
+                .HasOne(gr => gr.Loser)
+                .WithMany()
+                .HasForeignKey(gr => gr.LoserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
     }
 }
