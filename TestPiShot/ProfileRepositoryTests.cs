@@ -80,7 +80,7 @@ public class ProfileRepositoryTests
         Assert.AreEqual("Bok", profile2.Name);
 
         Assert.IsNull(_repo.UpdateProfile(new Profile { Name = "Buk", ProfileImage = "Buk.png" }, -1));
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => _repo.UpdateProfile(new Profile { Name = "a", ProfileImagePath = "aaa.png"}, profile2.Id));
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() => _repo.UpdateProfile(new Profile { Name = "a", ProfileImage = "aaa.png"}, profile2.Id));
     }
 
     [TestMethod]
