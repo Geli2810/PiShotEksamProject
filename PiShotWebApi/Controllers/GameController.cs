@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using BasketballApi.Models;
+using PiShotProject.Models;
 
 namespace BasketballApi.Controllers
 {

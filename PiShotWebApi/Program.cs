@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PiShotProject.ClassDB;
 using PiShotProject.Repositories;
+using PiShotProject.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ProfileRepository>();
 builder.Services.AddScoped<GameRepository>();
+builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 
 builder.Services.AddCors(options =>
 {
