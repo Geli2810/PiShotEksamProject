@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
-using BasketballApi.Models;
+using BasketballApi.Models; // DTOs
+using PiShotProject.Interfaces;
+using PiShotProject.Models;
 
 namespace BasketballApi.Controllers
 {
@@ -8,74 +9,79 @@ namespace BasketballApi.Controllers
     [ApiController]
     public class ProfilesController : ControllerBase
     {
-        private readonly IConfiguration _config;
-        public ProfilesController(IConfiguration config) { _config = config; }
+        private readonly IProfileRepository _repository;
 
-        [HttpGet]
-        public IActionResult GetAll()
+        public ProfilesController(IProfileRepository repository)
         {
-            var list = new List<ProfileDTO>();
-            using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
-            {
-                string query = @"
-                    SELECT p.Id, p.Name, p.ProfileImage,
-                    (SELECT COUNT(*) FROM Scores s WHERE s.ProfileId = p.Id) as Goals,
-                    (SELECT COUNT(*) FROM ShotAttempts a WHERE a.ProfileId = p.Id) as Attempts,
-                    (SELECT COUNT(*) FROM GameResults w WHERE w.WinnerId = p.Id) as Wins,
-                    (SELECT COUNT(*) FROM GameResults l WHERE l.LoserId = p.Id) as Losses
-                    FROM Profiles p";
-
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    conn.Open();
-                    using (var r = cmd.ExecuteReader())
-                    {
-                        while (r.Read())
-                        {
-                            int g = r["Goals"] != DBNull.Value ? (int)r["Goals"] : 0;
-                            int a = r["Attempts"] != DBNull.Value ? (int)r["Attempts"] : 0;
-                            int w = r["Wins"] != DBNull.Value ? (int)r["Wins"] : 0;
-                            int l = r["Losses"] != DBNull.Value ? (int)r["Losses"] : 0;
-                            int totalGames = w + l;
-
-                            list.Add(new ProfileDTO
-                            {
-                                Id = (int)r["Id"],
-                                Name = r["Name"].ToString(),
-                                ProfileImage = r["ProfileImage"] != DBNull.Value ? r["ProfileImage"].ToString() : "",
-                                Goals = g,
-                                Attempts = a,
-                                Accuracy = a > 0 ? Math.Round((double)g / a * 100, 1) : 0,
-                                Wins = w,
-                                Losses = l,
-                                WinLossRatio = totalGames > 0 ? Math.Round(((double)w / totalGames) * 100, 1) : 0
-                            });
-                        }
-                    }
-                }
-            }
-
-            // SORT: Best Win Rate -> Best Accuracy
-            var sorted = list.OrderByDescending(p => p.WinLossRatio).ThenByDescending(p => p.Accuracy).ToList();
-            for (int i = 0; i < sorted.Count; i++) sorted[i].Rank = i + 1;
-
-            return Ok(sorted);
+            _repository = repository;
         }
 
+        // GET
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public IActionResult GetAll()
+        {
+            var profiles = _repository.GetAllProfiles();
+            var list = profiles.Select(p => new ProfileDTO
+            {
+                Id = p.Id,
+                Name = p.Name,
+                ProfileImage = p.ProfileImage,
+                Goals = 0,
+                Attempts = 0,
+                Accuracy = 0,
+                Wins = 0,
+                Losses = 0,
+                WinLossRatio = 0,
+                Rank = 0
+            }).ToList();
+
+            return Ok(list);
+        }
+
+        // POST
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Create([FromBody] CreateProfileRequest req)
         {
-            using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
-            {
-                string query = "INSERT INTO Profiles (Name, ProfileImage) VALUES (@Name, @Img)";
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Name", req.Name);
-                    cmd.Parameters.AddWithValue("@Img", req.ProfileImage ?? (object)DBNull.Value);
-                    conn.Open(); cmd.ExecuteNonQuery();
-                }
-            }
-            return Ok(new { msg = "Created" });
+            if (string.IsNullOrWhiteSpace(req.Name))
+                return BadRequest(new { msg = "Name is required" });
+
+            var profile = new Profile(req.Name, req.ProfileImage);
+            _repository.AddProfile(profile);
+            return StatusCode(StatusCodes.Status201Created, new { msg = "Created" });
+        }
+
+        // PUT
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public IActionResult Update(int id, [FromBody] CreateProfileRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.Name))
+                return BadRequest(new { msg = "Name is required" });
+
+            var profile = new Profile(req.Name, req.ProfileImage);
+            var updated = _repository.UpdateProfile(profile, id);
+            if (updated == null)
+                return NotFound(new { msg = "Profile not found" });
+
+            return Ok(new { msg = "Updated" });
+        }
+
+        // DELETE
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult Delete(int id)
+        {
+            var deleted = _repository.DeleteProfile(id);
+            if (deleted == null)
+                return NotFound(new { msg = "Profile not found" });
+
+            return Ok(new { msg = "Deleted" });
         }
     }
 }

@@ -3,19 +3,6 @@
 namespace BasketballApi.Models
 {
     // DTOs (Data Transfer Objects)
-    public class ProfileDTO
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string ProfileImage { get; set; }
-        public int Goals { get; set; }
-        public int Attempts { get; set; }
-        public double Accuracy { get; set; }
-        public int Wins { get; set; }
-        public int Losses { get; set; }
-        public double WinLossRatio { get; set; }
-        public int Rank { get; set; }
-    }
 
     public class LiveScoreDTO
     {
@@ -31,13 +18,6 @@ namespace BasketballApi.Models
         public string ProfileImage { get; set; }
         public int VisualScore { get; set; } // Score shown on screen
         public int TotalScore { get; set; }  // Actual goals made
-    }
-
-    // Requests
-    public class CreateProfileRequest
-    {
-        public string Name { get; set; }
-        public string ProfileImage { get; set; }
     }
 
     public class StartGameRequest

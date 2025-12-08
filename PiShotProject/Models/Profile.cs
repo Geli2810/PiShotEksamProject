@@ -1,53 +1,42 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PiShotProject.Models
 {
     public class Profile
     {
         private string _name;
-        private string _profileImagePath;
+        private string _profileImage;
         public const string DefaultProfileImagePath = "https://st.depositphotos.com/1536130/60618/v/1600/depositphotos_606180794-stock-illustration-basketball-player-hand-drawn-line.jpg";
+
+        public Profile() : this("Default Name", DefaultProfileImagePath) { }
 
         public Profile(string name, string? profileImagePath = DefaultProfileImagePath)
         {
             Name = name;
-            ProfileImagePath = profileImagePath;
+            ProfileImage = profileImagePath;
         }
-
-        public Profile() : this("Default Name", DefaultProfileImagePath) { }
 
         public int Id { get; set; }
 
         public string Name
         {
-            get { return _name; }
+            get => _name;
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
-                {
                     throw new ArgumentException("Name cannot be null or whitespace");
-                }
                 if (value.Length < 2 || value.Length > 50)
-                {
                     throw new ArgumentOutOfRangeException("Name must be between 2 and 50 characters");
-                }
                 _name = value;
             }
         }
 
-        public string ProfileImagePath
+        public string ProfileImage
         {
-            get { return _profileImagePath; }
-            set { _profileImagePath = value; }
+            get => _profileImage;
+            set => _profileImage = value ?? DefaultProfileImagePath;
         }
 
-        public override string ToString()
-        {
-            return $"Profile: {Name}, Image Path: {ProfileImagePath}";
-        }
+        public override string ToString() => $"Profile: {Name}, Image Path: {ProfileImage}";
     }
 }
