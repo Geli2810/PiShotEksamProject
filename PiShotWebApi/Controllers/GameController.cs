@@ -2,6 +2,7 @@
 using Microsoft.Data.SqlClient;
 using BasketballApi.Models;
 using PiShotProject.Interfaces;
+using PiShotProject.Models;
 
 namespace BasketballApi.Controllers
 {
