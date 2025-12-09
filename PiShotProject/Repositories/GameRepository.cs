@@ -1,15 +1,7 @@
-﻿using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Win32.SafeHandles;
+﻿using Microsoft.EntityFrameworkCore;
 using PiShotProject.ClassDB;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PiShotProject.Repositories
 {
@@ -24,7 +16,11 @@ namespace PiShotProject.Repositories
 
         public CurrentGame? GetState()
         {
-            return _context.CurrentGame.Include(g => g.WinnerName).FirstOrDefault(g => g.Id == 1);
+            // Loader spiller-navigationer så vi kan finde WinnerName/WinnerImage
+            return _context.CurrentGame
+                .Include(g => g.Player1)
+                .Include(g => g.Player2)
+                .FirstOrDefault(g => g.Id == 1);
         }
 
         public void AddResult(GameResult result)

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using PiShotWebApi.DTO;
@@ -11,7 +10,6 @@ namespace BasketballApi.Controllers
     public class GameController : ControllerBase
     {
         private readonly IGameService _gameService;
-        private readonly IGameRepository _repository;
 
         public GameController(IGameService gameService)
         {
@@ -39,7 +37,6 @@ namespace BasketballApi.Controllers
             return Ok(new { msg = "Winner Declared" });
         }
 
-        
         [HttpPost("finish")]
         public IActionResult FinishGame([FromBody] EndGameRequestDTO req)
         {
@@ -48,19 +45,16 @@ namespace BasketballApi.Controllers
                 _gameService.RecordGameResult(req.WinnerId);
                 return Ok(new { msg = "Game Result Recorded" });
             }
-            catch(InvalidOperationException ex)
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(new { msg = ex.Message });
             }
         }
 
         [HttpGet("current")]
-        public ActionResult<GameStatusResponseDTO> GetCurrent()
+        public ActionResult<GameStatusResponse> GetCurrent()
         {
             return Ok(_gameService.GetCurrentStatus());
         }
-
-        
-        
     }
 }
