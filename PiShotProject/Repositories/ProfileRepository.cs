@@ -22,13 +22,6 @@ namespace PiShotProject.Repositories
             var profiles = _dbContext.Profiles
                 .AsNoTracking()
                 .ToList();
-            foreach (var p in profiles)
-            {
-                //_dbContext.Entry(p).Collection<Score>("Scores").Query().Where(s => s.ProfileId == p.Id).Load();
-                //_dbContext.Entry(p).Collection<ShotAttempt>("ShotAttempts").Query().Where(a => a.ProfileId == p.Id).Load();
-                //_dbContext.Entry(p).Collection<GameResult>("Wins").Query().Where(g => g.WinnerId == p.Id).Load();
-                //_dbContext.Entry(p).Collection<GameResult>("Losses").Query().Where(g => g.LoserId == p.Id).Load();
-            }
 
             return profiles;
         }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace PiShotProject.Models
+﻿namespace PiShotProject.Models
 {
     public class Profile
     {

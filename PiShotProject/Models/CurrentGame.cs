@@ -17,7 +17,7 @@ namespace PiShotProject.Models
         public int TiebreakOffsetP2 { get; set; }
 
         public int? CurrentWinnerId { get; set; }
-
+      
         public Profile? Player1 { get; set; }
         public Profile? Player2 { get; set; }
     }

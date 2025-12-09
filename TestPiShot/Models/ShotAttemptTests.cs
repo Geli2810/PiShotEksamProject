@@ -1,7 +1,7 @@
 namespace TestPiShot;
 
 [TestClass]
-public class ProfileTests
+public class ShotAttemptTests
 {
     [TestMethod]
     public void TestMethod1()

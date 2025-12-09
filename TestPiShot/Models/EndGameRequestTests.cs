@@ -1,7 +1,7 @@
 namespace TestPiShot;
 
 [TestClass]
-public class ProfileTests
+public class EndGameRequestTests
 {
     [TestMethod]
     public void TestMethod1()
