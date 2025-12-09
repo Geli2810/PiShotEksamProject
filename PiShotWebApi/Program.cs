@@ -6,43 +6,40 @@ using PiShotProject.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+// --- Services ---
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// CORS (vi registrerer bare CORS, men bruger inline policy senere)
+builder.Services.AddCors();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader();
-    });
-});
-
+// DI
 builder.Services.AddScoped<IGameRepository, GameRepository>();
 builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 
+// DB
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<PiShotDBContext>(options =>
     options.UseSqlServer(connectionString));
 
 var app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 app.UseHttpsRedirection();
 
-// CORS SKAL ligge før Authorization og MapControllers
-app.UseCors("AllowAll");
+// Routing -> CORS -> Auth -> Controllers
+app.UseRouting();
+
+// *** VIGTIGT: global CORS-policy inline ***
+app.UseCors(cors => cors
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+);
 
 app.UseAuthorization();
 
