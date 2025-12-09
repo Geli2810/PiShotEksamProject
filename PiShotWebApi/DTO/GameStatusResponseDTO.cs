@@ -23,7 +23,6 @@
                 P2_Id = game?.Player2Id ?? 0,
                 CurrentWinnerId = game?.CurrentWinnerId,
                 WinnerName = game?.WinnerName,
-                WinnerImage = game?.WinnerImage
             };
         }
     }
