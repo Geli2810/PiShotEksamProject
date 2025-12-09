@@ -60,15 +60,14 @@ namespace PiShotProject.Services
             string? winnerName = null;
             string? winnerImage = null;
 
-            // Her finder vi winner-navn og -billede ud fra WinnerId + Profile
             if (game.CurrentWinnerId.HasValue)
             {
-                if (game.CurrentWinnerId.Value == game.Player1Id && game.Player1 != null)
+                if (game.CurrentWinnerId == game.Player1Id && game.Player1 != null)
                 {
                     winnerName = game.Player1.Name;
                     winnerImage = game.Player1.ProfileImage;
                 }
-                else if (game.CurrentWinnerId.Value == game.Player2Id && game.Player2 != null)
+                if (game.CurrentWinnerId == game.Player2Id && game.Player2 != null)
                 {
                     winnerName = game.Player2.Name;
                     winnerImage = game.Player2.ProfileImage;
