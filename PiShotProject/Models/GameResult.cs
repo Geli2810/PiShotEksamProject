@@ -14,5 +14,6 @@ namespace PiShotProject.Models
         public DateTime PlayedOn { get; set; } = DateTime.UtcNow;
         public Profile Winner { get; set; }
         public Profile Loser { get; set; }
+        public string GameScore { get; set; }
     }
 }
