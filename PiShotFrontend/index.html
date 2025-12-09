@@ -15,42 +15,72 @@
             <header class="main-header">
                 <div class="logo">PISHOT <span class="highlight">ARENA</span></div>
                 <nav v-if="!gameActive" class="nav-tabs">
-                    <button @click="currentView = 'lobby'" :class="{active: currentView === 'lobby'}"><i class="fas fa-gamepad"></i> Lobby</button>
-                    <button @click="currentView = 'profiles'" :class="{active: currentView === 'profiles'}"><i class="fas fa-users"></i> Profiles</button>
-                    <button @click="currentView = 'stats'" :class="{active: currentView === 'stats'}"><i class="fas fa-chart-bar"></i> Stats</button>
+                    <button @click="currentView = 'lobby'" :class="{active: currentView === 'lobby'}">
+                        <i class="fas fa-gamepad"></i> Lobby
+                    </button>
+                    <button @click="currentView = 'profiles'" :class="{active: currentView === 'profiles'}">
+                        <i class="fas fa-users"></i> Profiles
+                    </button>
+                    <button @click="currentView = 'stats'" :class="{active: currentView === 'stats'}">
+                        <i class="fas fa-chart-bar"></i> Stats
+                    </button>
+                    <button @click="currentView = 'dev'" :class="{active: currentView === 'dev'}">
+                        <i class="fas fa-tools"></i> Dev
+                    </button>
                 </nav>
             </header>
 
             <main>
                 <transition name="fade" mode="out-in">
                     
+                    <!-- LOBBY -->
                     <div v-if="currentView === 'lobby' && !gameActive" class="view-container">
                         <div class="card match-setup-card">
                             <h3>START MATCH</h3>
                             <div class="match-setup">
                                 <div class="player-select-box">
                                     <label>PLAYER 1</label>
-                                    <select v-model="selectedP1"><option :value="null">Select</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select>
-                                    <div v-if="selectedP1" class="mini-stat-card"><img :src="getProfile(selectedP1).profileImage" class="avatar"><div>{{getProfile(selectedP1).accuracy}}% Acc</div></div>
+                                    <select v-model="selectedP1">
+                                        <option :value="null">Select</option>
+                                        <option v-for="p in profiles" :value="p.id">{{p.name}}</option>
+                                    </select>
+                                    <div v-if="selectedP1" class="mini-stat-card">
+                                        <img :src="getProfile(selectedP1).profileImage" class="avatar">
+                                        <div>{{getProfile(selectedP1).accuracy}}% Acc</div>
+                                    </div>
                                 </div>
                                 <div class="vs-divider">VS</div>
                                 <div class="player-select-box">
                                     <label>PLAYER 2</label>
-                                    <select v-model="selectedP2"><option :value="null">Select</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select>
-                                    <div v-if="selectedP2" class="mini-stat-card"><img :src="getProfile(selectedP2).profileImage" class="avatar"><div>{{getProfile(selectedP2).accuracy}}% Acc</div></div>
+                                    <select v-model="selectedP2">
+                                        <option :value="null">Select</option>
+                                        <option v-for="p in profiles" :value="p.id">{{p.name}}</option>
+                                    </select>
+                                    <div v-if="selectedP2" class="mini-stat-card">
+                                        <img :src="getProfile(selectedP2).profileImage" class="avatar">
+                                        <div>{{getProfile(selectedP2).accuracy}}% Acc</div>
+                                    </div>
                                 </div>
                             </div>
-                            <button class="btn-primary start-btn" @click="startGame">LOCK IN & START</button>
+                            <button class="btn-primary start-btn" @click="startGame">
+                                LOCK IN & START
+                            </button>
                         </div>
                     </div>
 
+                    <!-- PROFILES -->
                     <div v-else-if="currentView === 'profiles' && !gameActive" class="view-container">
                         <div class="card create-card">
                             <h3>Create New Player</h3>
                             <div class="input-group">
                                 <input v-model="newName" placeholder="Enter Name">
-                                <label class="file-upload"><input type="file" @change="handleFileUpload"><i class="fas fa-camera"></i></label>
-                                <button class="btn-icon" @click="createProfile"><i class="fas fa-plus"></i></button>
+                                <label class="file-upload">
+                                    <input type="file" @change="handleFileUpload">
+                                    <i class="fas fa-camera"></i>
+                                </label>
+                                <button class="btn-icon" @click="createProfile">
+                                    <i class="fas fa-plus"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -64,67 +94,144 @@
                                     </div>
                                 </div>
                                 <div class="profile-actions">
-                                    <button class="action-btn edit" @click="openEditModal(p)"><i class="fas fa-pen"></i></button>
-                                    <button class="action-btn delete" @click="deleteProfile(p.id)"><i class="fas fa-trash"></i></button>
+                                    <button class="action-btn edit" @click="openEditModal(p)">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button class="action-btn delete" @click="deleteProfile(p.id)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- STATS -->
                     <div v-else-if="currentView === 'stats' && !gameActive" class="view-container">
-                        <div class="stats-control"><select v-model="statsProfileId" @change="calculateNbaTwin"><option :value="null">-- Select Player --</option><option v-for="p in profiles" :value="p.id">{{p.name}}</option></select></div>
+                        <div class="stats-control">
+                            <select v-model="statsProfileId" @change="calculateNbaTwin">
+                                <option :value="null">-- Select Player --</option>
+                                <option v-for="p in profiles" :value="p.id">{{p.name}}</option>
+                            </select>
+                        </div>
                         <div class="stats-grid">
                             <div v-if="statsProfile" class="card profile-detail-card">
                                 <img :src="statsProfile.profileImage" class="avatar-large">
-                                <h2>{{statsProfile.name}} <span class="rank-tag">#{{statsProfile.rank}}</span></h2>
-                                <p>Acc: {{statsProfile.accuracy}}% | Win Rate: {{statsProfile.winLossRatio}}%</p>
+                                <h2>
+                                    {{statsProfile.name}}
+                                    <span class="rank-tag">#{{statsProfile.rank}}</span>
+                                </h2>
+                                <p>
+                                    Acc: {{statsProfile.accuracy}}% |
+                                    Win Rate: {{statsProfile.winLossRatio}}%
+                                </p>
                             </div>
                             <div v-if="nbaTwin" class="card nba-card">
                                 <div class="nba-label">NBA MATCH</div>
-                                <div class="nba-content"><img :src="`https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaTwin.id}.png`"><div><h3>{{nbaTwin.name}}</h3><div class="match-pct">{{nbaTwin.accuracy}}% ACC</div></div></div>
+                                <div class="nba-content">
+                                    <img :src="`https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaTwin.id}.png`">
+                                    <div>
+                                        <h3>{{nbaTwin.name}}</h3>
+                                        <div class="match-pct">{{nbaTwin.accuracy}}% ACC</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="card leaderboard-card">
                             <h3>LEADERBOARD</h3>
                             <table>
-                                <thead><tr><th>#</th><th>Player</th><th>Win%</th><th>Acc</th></tr></thead>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Player</th>
+                                        <th>Win%</th>
+                                        <th>Acc</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
                                     <tr v-for="p in top10" :key="p.id" :class="{active: p.id === statsProfileId}">
                                         <td class="rank-cell">{{p.rank}}</td>
-                                        <td><img :src="p.profileImage" class="avatar-tiny">{{p.name}}</td>
-                                        <td>{{p.winLossRatio}}%</td><td>{{p.accuracy}}%</td>
+                                        <td>
+                                            <img :src="p.profileImage" class="avatar-tiny">
+                                            {{p.name}}
+                                        </td>
+                                        <td>{{p.winLossRatio}}%</td>
+                                        <td>{{p.accuracy}}%</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
+                    <!-- DEV TOOLS (ingen ekstra controllers, kun eksisterende endpoints) -->
+                    <div v-else-if="currentView === 'dev' && !gameActive" class="view-container">
+                        <div class="card dev-card">
+                            <h3>Developer Tools</h3>
+                            <div class="input-group vertical">
+                                <label>Player til simulation</label>
+                                <select v-model.number="devProfileId">
+                                    <option :value="null">-- Select Player --</option>
+                                    <option v-for="p in profiles" :value="p.id">{{p.name}}</option>
+                                </select>
+                            </div>
+                            <div class="dev-buttons">
+                                <button class="btn-primary" @click="devAddAttempt">
+                                    Add Attempt (scores/shot_attempt)
+                                </button>
+                                <button class="btn-primary" @click="devAddScore">
+                                    Add Score (scores)
+                                </button>
+                                <button class="btn-primary" @click="devDeclareWinner">
+                                    Declare Winner (game/declare_winner)
+                                </button>
+                                <button class="btn-primary" @click="devFinishGame">
+                                    Finish Game (game/finish)
+                                </button>
+                                <button class="btn-danger" @click="devStopGame">
+                                    Stop Game (game/stop)
+                                </button>
+                            </div>
+                            <p class="sub-text" style="margin-top:10px;">
+                                Brug dette til at teste jeres API uden at Pi'erne er i gang.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- LIVE GAME VIEW -->
                     <div v-else-if="gameActive" class="view-container game-view">
                         <div class="live-badge">● LIVE MATCH</div>
-                        <div v-if="isTiebreak" class="tiebreak-alert">OVERTIME: FIRST TO 5 (WIN BY 2)</div>
+                        <div v-if="isTiebreak" class="tiebreak-alert">
+                            OVERTIME: FIRST TO 5 (WIN BY 2)
+                        </div>
                         
                         <div v-if="winner" class="winner-modal">
                             <div class="modal-content">
                                 <div class="trophy-anim">🏆</div>
                                 <img :src="winner.profileImage" class="avatar-winner">
                                 <h1>{{winner.name}} WINS!</h1>
-                                <button class="btn-primary" @click="finishGame">RECORD RESULT</button>
+                                <button class="btn-primary" @click="finishGame">
+                                    RECORD RESULT
+                                </button>
                             </div>
                         </div>
 
                         <div class="scoreboard-grid">
                             <div class="score-card p1" :class="{leading: isLeader(p1Data)}">
-                                <img :src="p1Data.profileImage" class="avatar-game"><h2>{{p1Data.name}}</h2><div class="score-digit">{{p1Data.visualScore}}</div>
+                                <img :src="p1Data.profileImage" class="avatar-game">
+                                <h2>{{p1Data.name}}</h2>
+                                <div class="score-digit">{{p1Data.visualScore}}</div>
                             </div>
                             <div class="vs-badge">VS</div>
                             <div class="score-card p2" :class="{leading: isLeader(p2Data)}">
-                                <img :src="p2Data.profileImage" class="avatar-game"><h2>{{p2Data.name}}</h2><div class="score-digit">{{p2Data.visualScore}}</div>
+                                <img :src="p2Data.profileImage" class="avatar-game">
+                                <h2>{{p2Data.name}}</h2>
+                                <div class="score-digit">{{p2Data.visualScore}}</div>
                             </div>
                         </div>
                     </div>
                 </transition>
             </main>
 
+            <!-- EDIT MODAL -->
             <div v-if="editingProfile" class="modal-overlay">
                 <div class="modal-box">
                     <h3>Edit Profile</h3>
@@ -132,7 +239,10 @@
                         <label>Name</label>
                         <input v-model="editingProfile.name">
                         <label>New Image (Optional)</label>
-                        <label class="file-upload full-width"><input type="file" @change="handleEditFileUpload"><i class="fas fa-camera"></i> Upload New</label>
+                        <label class="file-upload full-width">
+                            <input type="file" @change="handleEditFileUpload">
+                            <i class="fas fa-camera"></i> Upload New
+                        </label>
                     </div>
                     <div class="modal-actions">
                         <button class="btn-cancel" @click="editingProfile = null">Cancel</button>
