@@ -8,6 +8,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- AXIOS -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
     <div id="app" v-cloak>
@@ -162,7 +164,7 @@
                         </div>
                     </div>
 
-                    <!-- DEV TOOLS (ingen ekstra controllers, kun eksisterende endpoints) -->
+                    <!-- DEV TOOLS -->
                     <div v-else-if="currentView === 'dev' && !gameActive" class="view-container">
                         <div class="card dev-card">
                             <h3>Developer Tools</h3>
@@ -253,6 +255,8 @@
 
         </div>
     </div>
+
+    <!-- Vores app-logik -->
     <script src="app.js"></script>
 </body>
 </html>
