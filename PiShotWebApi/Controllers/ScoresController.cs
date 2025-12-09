@@ -53,19 +53,38 @@ namespace PiShotWebApi.Controllers
         {
             var gameEntity = _repo.GetCurrentGameEntity();
 
+            // Hvis der ikke er noget game eller ingen starttid → tom score
             if (gameEntity == null || !gameEntity.StartTime.HasValue)
             {
-                return Ok(new LiveScoreDTO { P1 = new PlayerScoreDTO(), P2 = new PlayerScoreDTO() });
+                return Ok(new LiveScoreDTO
+                {
+                    IsTiebreak = false,
+                    P1 = new PlayerScoreDTO(),
+                    P2 = new PlayerScoreDTO()
+                });
             }
 
+            // Hvis spillerne ikke er sat (null), så giver det heller ikke mening at hente scores
+            if (!gameEntity.Player1Id.HasValue || !gameEntity.Player2Id.HasValue)
+            {
+                return Ok(new LiveScoreDTO
+                {
+                    IsTiebreak = false,
+                    P1 = new PlayerScoreDTO(),
+                    P2 = new PlayerScoreDTO()
+                });
+            }
+
+            // Her VED vi, at de har værdier → derfor .Value
             (int total1, int total2) = _repo.GetScoresSinceGameStart(
-                gameEntity.Player1Id,
-                gameEntity.Player2Id,
+                gameEntity.Player1Id.Value,
+                gameEntity.Player2Id.Value,
                 gameEntity.StartTime.Value);
 
+            // Tiebreak-logik
             if (!gameEntity.IsTiebreak && total1 == 5 && total2 == 5)
             {
-                _repo.UpdateTiebreakStatus(gameEntity.Player1Id, gameEntity.Player2Id);
+                _repo.UpdateTiebreakStatus(gameEntity.Player1Id.Value, gameEntity.Player2Id.Value);
 
                 gameEntity.IsTiebreak = true;
                 gameEntity.TiebreakOffsetP1 = 5;
@@ -77,7 +96,7 @@ namespace PiShotWebApi.Controllers
                 IsTiebreak = gameEntity.IsTiebreak,
                 P1 = new PlayerScoreDTO
                 {
-                    Id = gameEntity.Player1Id,
+                    Id = gameEntity.Player1Id.Value,
                     Name = gameEntity.Player1?.Name ?? "P1",
                     ProfileImage = gameEntity.Player1?.ProfileImage ?? "",
                     TotalScore = total1,
@@ -85,7 +104,7 @@ namespace PiShotWebApi.Controllers
                 },
                 P2 = new PlayerScoreDTO
                 {
-                    Id = gameEntity.Player2Id,
+                    Id = gameEntity.Player2Id.Value,
                     Name = gameEntity.Player2?.Name ?? "P2",
                     ProfileImage = gameEntity.Player2?.ProfileImage ?? "",
                     TotalScore = total2,
