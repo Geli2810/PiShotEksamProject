@@ -6,8 +6,9 @@ namespace PiShotProject.Models
     {
         public int Id { get; set; }
 
-        public int Player1Id { get; set; }
-        public int Player2Id { get; set; }
+        // Gør dem nullable indtil en kamp faktisk er startet
+        public int? Player1Id { get; set; }
+        public int? Player2Id { get; set; }
 
         public bool IsActive { get; set; }
         public DateTime? StartTime { get; set; }
@@ -17,7 +18,7 @@ namespace PiShotProject.Models
         public int TiebreakOffsetP2 { get; set; }
 
         public int? CurrentWinnerId { get; set; }
-      
+
         public Profile? Player1 { get; set; }
         public Profile? Player2 { get; set; }
     }
