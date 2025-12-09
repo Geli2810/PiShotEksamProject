@@ -1,7 +1,7 @@
 ﻿using System;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
-
+//
 namespace PiShotProject.Services
 {
     public class GameService : IGameService
@@ -60,15 +60,14 @@ namespace PiShotProject.Services
             string? winnerName = null;
             string? winnerImage = null;
 
-            // Her finder vi winner-navn og -billede ud fra WinnerId + Profile
             if (game.CurrentWinnerId.HasValue)
             {
-                if (game.CurrentWinnerId.Value == game.Player1Id && game.Player1 != null)
+                if (game.CurrentWinnerId == game.Player1Id && game.Player1 != null)
                 {
                     winnerName = game.Player1.Name;
                     winnerImage = game.Player1.ProfileImage;
                 }
-                else if (game.CurrentWinnerId.Value == game.Player2Id && game.Player2 != null)
+                if (game.CurrentWinnerId == game.Player2Id && game.Player2 != null)
                 {
                     winnerName = game.Player2.Name;
                     winnerImage = game.Player2.ProfileImage;
@@ -78,8 +77,8 @@ namespace PiShotProject.Services
             return new GameStatusResponse
             {
                 IsActive = game.IsActive,
-                Player1Id = game.Player1Id,
-                Player2Id = game.Player2Id,
+                Player1Id = game.Player1Id ?? 0,
+                Player2Id = game.Player2Id ?? 0,
                 CurrentWinnerId = game.CurrentWinnerId,
                 WinnerName = winnerName,
                 WinnerImage = winnerImage
@@ -94,7 +93,14 @@ namespace PiShotProject.Services
                 throw new InvalidOperationException("No active game found");
             }
 
-            int loserId = (winnerId == game.Player1Id) ? game.Player2Id : game.Player1Id;
+            if (!game.Player1Id.HasValue || !game.Player2Id.HasValue)
+            {
+                throw new InvalidOperationException("Game does not have both players set.");
+            }
+
+            int loserId = (winnerId == game.Player1Id.Value)
+                ? game.Player2Id.Value
+                : game.Player1Id.Value;
 
             var result = new GameResult
             {

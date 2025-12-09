@@ -3,7 +3,6 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
-            // Tilpas hvis jeres base er anderledes
             apiUrl: "https://pishot-project-hqd6ffa0gvejbufu.canadacentral-01.azurewebsites.net/api",
             
             currentView: 'lobby', // lobby | profiles | stats | dev
@@ -46,6 +45,7 @@ createApp({
     mounted() {
         this.loadProfiles(); 
         this.loadNbaData();
+        this.checkStatus(true);          // første load: tjek status én gang
         this.timer = setInterval(this.tick, 1000);
     },
     methods: {
@@ -61,182 +61,254 @@ createApp({
             reader.onload = (e) => { this.newImageBase64 = e.target.result; };
             if (file) reader.readAsDataURL(file);
         },
+
         async createProfile() {
             if (!this.newName) return;
-            await fetch(`${this.apiUrl}/profiles`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name: this.newName, profileImage: this.newImageBase64})
-            });
-            this.newName = "";
-            this.newImageBase64 = ""; 
-            await this.loadProfiles();
+            try {
+                await axios.post(`${this.apiUrl}/profiles`, {
+                    name: this.newName,
+                    profileImage: this.newImageBase64
+                });
+                this.newName = "";
+                this.newImageBase64 = ""; 
+                await this.loadProfiles();
+            } catch (e) {
+                console.error("Fejl ved createProfile:", e);
+                alert("Kunne ikke oprette profil");
+            }
         },
+
         async deleteProfile(id) {
             if (!confirm("Are you sure you want to delete this player?")) return;
-            
-            await fetch(`${this.apiUrl}/profiles/${id}`, {
-                method: 'DELETE'
-            });
-            await this.loadProfiles();
-            
-            if (this.selectedP1 === id) this.selectedP1 = null;
-            if (this.selectedP2 === id) this.selectedP2 = null;
+            try {
+                await axios.delete(`${this.apiUrl}/profiles/${id}`);
+                await this.loadProfiles();
+                
+                if (this.selectedP1 === id) this.selectedP1 = null;
+                if (this.selectedP2 === id) this.selectedP2 = null;
+            } catch (e) {
+                console.error("Fejl ved deleteProfile:", e);
+                alert("Kunne ikke slette profil");
+            }
         },
+
         openEditModal(profile) {
             this.editingProfile = { ...profile }; 
             this.editImageBase64 = null;
         },
+
         handleEditFileUpload(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
             reader.onload = (e) => { this.editImageBase64 = e.target.result; };
             if (file) reader.readAsDataURL(file);
         },
+
         async saveProfileUpdate() {
             if (!this.editingProfile) return;
-            
             const payload = {
                 name: this.editingProfile.name,
                 profileImage: this.editImageBase64 || this.editingProfile.profileImage
             };
-
-            await fetch(`${this.apiUrl}/profiles/${this.editingProfile.id}`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-
-            this.editingProfile = null;
-            this.editImageBase64 = null;
-            await this.loadProfiles();
+            try {
+                await axios.put(`${this.apiUrl}/profiles/${this.editingProfile.id}`, payload);
+                this.editingProfile = null;
+                this.editImageBase64 = null;
+                await this.loadProfiles();
+            } catch (e) {
+                console.error("Fejl ved saveProfileUpdate:", e);
+                alert("Kunne ikke opdatere profil");
+            }
         },
 
         // --- GAME LOGIK ---
-        async checkStatus() {
+        async checkStatus(logOnError = false) {
             try {
-                const r = await fetch(`${this.apiUrl}/game/current?t=${Date.now()}`);
-                const d = await r.json();
-                const isActive = d.isActive || d.IsActive;
+                const res = await axios.get(`${this.apiUrl}/game/current`, {
+                    params: { t: Date.now() }
+                });
+                const d = res.data;
+                // console.log("GAME STATUS:", d);
+
+                const isActive = d.isActive ?? d.IsActive ?? false;
                 
                 if (isActive) {
                     this.gameActive = true;
-                    const winId = d.currentWinnerId || d.CurrentWinnerId;
+                    const winId = d.currentWinnerId ?? d.CurrentWinnerId;
                     if (winId) {
                         this.winner = {
                             id: winId,
                             name: d.winnerName || d.WinnerName,
                             profileImage: d.winnerImage || d.WinnerImage
                         };
+                    } else {
+                        this.winner = null;
                     }
                 } else {
                     this.gameActive = false;
                     this.winner = null;
                 }
-            } catch(e) {
-                // Ignorer fejl i polling
+            } catch (e) {
+                if (logOnError) {
+                    console.error("Fejl i checkStatus:", e);
+                    alert("Fejl ved hentning af game status. Tjek API-log.");
+                }
             }
         },
+
         async fetchLiveScores() {
             try {
-                const r = await fetch(`${this.apiUrl}/scores/live?t=${Date.now()}`);
-                this.liveStats = await r.json();
-            } catch(e){}
-        },
-        async finishGame() {
-            if (this.winner) {
-                await fetch(`${this.apiUrl}/game/finish`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({winnerId: this.winner.id})
+                const res = await axios.get(`${this.apiUrl}/scores/live`, {
+                    params: { t: Date.now() }
                 });
+                this.liveStats = res.data;
+            } catch (e) {
+                console.error("Fejl i fetchLiveScores:", e);
             }
+        },
+
+        async finishGame() {
+            try {
+                if (this.winner) {
+                    await axios.post(`${this.apiUrl}/game/finish`, {
+                        winnerId: this.winner.id
+                    });
+                }
+            } catch (e) {
+                console.error("Fejl i finishGame:", e);
+                alert("Kunne ikke afslutte kampen");
+                return;
+            }
+
             this.gameActive = false; 
             this.winner = null; 
             this.currentView = 'lobby';
             setTimeout(this.loadProfiles, 1000);
         },
+
         async loadProfiles() {
-            const r = await fetch(`${this.apiUrl}/profiles?t=${Date.now()}`);
-            this.profiles = await r.json();
+            try {
+                const res = await axios.get(`${this.apiUrl}/profiles`, {
+                    params: { t: Date.now() }
+                });
+                this.profiles = res.data;
+            } catch (e) {
+                console.error("Fejl i loadProfiles:", e);
+            }
         },
+
         async loadNbaData() {
             try { 
-                const r = await fetch('nba_2025.json'); 
-                this.nbaData = await r.json(); 
-            } catch(e){}
+                const res = await axios.get('nba_2025.json');
+                this.nbaData = res.data;
+            } catch(e){
+                console.warn("Kunne ikke loade NBA-data (ok i udvikling)", e);
+            }
         },
+
         calculateNbaTwin() {
             if (!this.statsProfile || !this.nbaData.length) return;
             const uAcc = this.statsProfile.accuracy;
             this.nbaTwin = this.nbaData.reduce((prev, curr) => 
                 (Math.abs(curr.accuracy - uAcc) < Math.abs(prev.accuracy - uAcc) ? curr : prev));
         },
+
         async startGame() {
-            if (!this.selectedP1 || !this.selectedP2) return alert("Select 2 Players");
-            await fetch(`${this.apiUrl}/game/start`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    player1Id: parseInt(this.selectedP1),
-                    player2Id: parseInt(this.selectedP2)
-                })
-            });
-            await this.checkStatus();
+            if (!this.selectedP1 || !this.selectedP2) {
+                alert("Select 2 Players");
+                return;
+            }
+
+            try {
+                const payload = {
+                    player1Id: Number(this.selectedP1),
+                    player2Id: Number(this.selectedP2)
+                };
+                console.log("StartGame payload:", payload);
+
+                const res = await axios.post(`${this.apiUrl}/game/start`, payload);
+                console.log("Game started OK:", res.data);
+
+                await this.checkStatus(true);
+            } catch (e) {
+                console.error("Fejl i startGame:", e);
+                alert("Kunne ikke starte spillet");
+            }
         },
+
         getProfile(id) { 
             return this.profiles.find(p => p.id === id) || {accuracy:0, profileImage:"", name:""}; 
         },
+
         isLeader(data) { 
             if (data.visualScore == null) return false;
             return data.visualScore >= (this.p1Data.visualScore || 0) &&
                    data.visualScore >= (this.p2Data.visualScore || 0);
         },
 
-        // --- DEV TOOLS: kalder kun eksisterende endpoints ---
+        // --- DEV TOOLS ---
         async devAddAttempt() {
             if (!this.devProfileId) return alert("Select a player");
-            await fetch(`${this.apiUrl}/scores/shot_attempt`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({profileId: this.devProfileId})
-            });
-            alert("Attempt sendt til API");
+            try {
+                await axios.post(`${this.apiUrl}/scores/shot_attempt`, {
+                    profileId: this.devProfileId
+                });
+                alert("Attempt sendt til API");
+            } catch (e) {
+                console.error("Fejl i devAddAttempt:", e);
+                alert("Kunne ikke sende attempt");
+            }
         },
+
         async devAddScore() {
             if (!this.devProfileId) return alert("Select a player");
-            await fetch(`${this.apiUrl}/scores`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({profileId: this.devProfileId})
-            });
-            alert("Score sendt til API");
+            try {
+                await axios.post(`${this.apiUrl}/scores`, {
+                    profileId: this.devProfileId
+                });
+                alert("Score sendt til API");
+            } catch (e) {
+                console.error("Fejl i devAddScore:", e);
+                alert("Kunne ikke sende score");
+            }
         },
+
         async devDeclareWinner() {
             if (!this.devProfileId) return alert("Select a player som vinder");
-            await fetch(`${this.apiUrl}/game/declare_winner`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({winnerId: this.devProfileId})
-            });
-            alert("Winner declared");
+            try {
+                await axios.post(`${this.apiUrl}/game/declare_winner`, {
+                    winnerId: this.devProfileId
+                });
+                alert("Winner declared");
+            } catch (e) {
+                console.error("Fejl i devDeclareWinner:", e);
+                alert("Kunne ikke declare winner");
+            }
         },
+
         async devFinishGame() {
             if (!this.devProfileId) return alert("Select a player som vinder");
-            await fetch(`${this.apiUrl}/game/finish`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({winnerId: this.devProfileId})
-            });
-            await this.checkStatus();
-            alert("Game finish kaldt");
+            try {
+                await axios.post(`${this.apiUrl}/game/finish`, {
+                    winnerId: this.devProfileId
+                });
+                await this.checkStatus(true);
+                alert("Game finish kaldt");
+            } catch (e) {
+                console.error("Fejl i devFinishGame:", e);
+                alert("Kunne ikke finish game");
+            }
         },
+
         async devStopGame() {
-            await fetch(`${this.apiUrl}/game/stop`, {
-                method: 'POST'
-            });
-            await this.checkStatus();
-            alert("Game stoppet (stop endpoint)");
+            try {
+                await axios.post(`${this.apiUrl}/game/stop`);
+                await this.checkStatus(true);
+                alert("Game stoppet (stop endpoint)");
+            } catch (e) {
+                console.error("Fejl i devStopGame:", e);
+                alert("Kunne ikke stoppe game");
+            }
         }
     }
 }).mount('#app');

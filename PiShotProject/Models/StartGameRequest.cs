@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace PiShotProject.Models
 {
     public class StartGameRequest
     {
+        [JsonPropertyName("player1Id")]
         public int Player1Id { get; set; }
+
+        [JsonPropertyName("player2Id")]
         public int Player2Id { get; set; }
     }
 }

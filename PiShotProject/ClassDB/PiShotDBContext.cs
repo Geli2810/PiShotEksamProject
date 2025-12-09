@@ -55,13 +55,13 @@ namespace PiShotProject.ClassDB
                 .HasForeignKey(gr => gr.LoserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Seed en enkelt CurrentGame række med Id=1
+            // Seed én CurrentGame række med Id=1, men uden spillere endnu
             modelBuilder.Entity<CurrentGame>().HasData(
                 new CurrentGame
                 {
                     Id = 1,
-                    Player1Id = 0,
-                    Player2Id = 0,
+                    Player1Id = null,
+                    Player2Id = null,
                     IsActive = false,
                     StartTime = null,
                     IsTiebreak = false,
