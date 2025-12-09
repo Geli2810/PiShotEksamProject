@@ -14,13 +14,14 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
+
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
 
-      - name: Build And Deploy
+      - name: Deploy Static Frontend
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -28,16 +29,16 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
 
-          # Path to your Vue/Vite app
+          # 👇 Din frontend ligger her
           app_location: "PiShotFrontend"
 
-          # Build command for Vite/Vue
-          app_build_command: "npm install && npm run build"
+          # 👇 Fortæl Azure, at der IKKE er en build-proces
+          skip_app_build: true
 
-          # Compiled output folder
-          output_location: "PiShotFrontend/dist"
+          # 👇 Der findes INGEN dist-folder, så lad output være tom
+          output_location: ""
 
-          # No API in Static Web App (API is hosted separately)
+          # 👇 Du bruger IKKE Azure Functions som API
           api_location: ""
           skip_api_build: true
 
