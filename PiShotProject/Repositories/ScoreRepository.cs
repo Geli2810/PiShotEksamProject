@@ -1,10 +1,7 @@
-﻿using System;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using PiShotProject.ClassDB;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace PiShotProject.Repositories
 {
