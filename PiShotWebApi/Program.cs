@@ -30,6 +30,18 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SpecificCorsPolicy", policy =>
+    {
+        // ERSTATTET: AllowAnyOrigin()
+        policy.WithOrigins("https://white-cliff-00bf1d610.3.azurestaticapps.net/")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+
 var cs = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<PiShotDBContext>(opts => opts.UseSqlServer(cs));
 
@@ -38,7 +50,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseCors("AllowAll");
+app.UseCors("SpecifyCorsPolicy");
 app.MapControllers();
 
 app.Run();
