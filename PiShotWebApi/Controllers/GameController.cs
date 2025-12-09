@@ -3,7 +3,7 @@ using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using PiShotWebApi.DTO;
 
-namespace BasketballApi.Controllers
+namespace PiShotWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
