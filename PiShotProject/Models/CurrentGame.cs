@@ -26,6 +26,5 @@ namespace PiShotProject.Models
         public string WinnerName { get; set; }
         public string WinnerImage {  get; set; }
 
-
     }
 }

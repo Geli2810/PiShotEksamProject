@@ -55,7 +55,7 @@ namespace PiShotProject.ClassDB
                 .OnDelete(DeleteBehavior.Restrict);
                 
             modelBuilder.Entity<CurrentGame>().HasData(
-                new CurrentGame { Id = 1, Player1Id = 0, Player2Id = 0, IsActive = false, StartTime = null, CurrentWinnerId = null }
+                new CurrentGame { Id = 1, Player1Id = 0, Player2Id = 0, IsActive = false, StartTime = null, CurrentWinnerId = null, WinnerName = null, WinnerImage = null }
                 );           
         }
     }
