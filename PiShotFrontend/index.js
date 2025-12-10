@@ -62,6 +62,45 @@ createApp({
             if (this.gameActive) await this.fetchLiveScores();
         },
 
+        // --- HJÆLPER: beregn stats + leaderboard i frontend ---
+        recalcStatsAndLeaderboard(profiles) {
+            // 1) Beregn accuracy og win% for hver profil
+            profiles.forEach(p => {
+                const goals = p.goals ?? 0;
+                const attempts = p.attempts ?? 0;
+                const wins = p.wins ?? 0;
+                const losses = p.losses ?? 0;
+
+                const accuracy =
+                    attempts > 0 ? Math.round((goals * 100.0) / attempts) : 0;
+
+                const totalGames = wins + losses;
+                const winLossRatio =
+                    totalGames > 0 ? Math.round((wins * 100.0) / totalGames) : 0;
+
+                p.goals = goals;
+                p.attempts = attempts;
+                p.wins = wins;
+                p.losses = losses;
+                p.accuracy = accuracy;
+                p.winLossRatio = winLossRatio;
+            });
+
+            // 2) Sorter (flest wins -> accuracy -> navn)
+            profiles.sort((a, b) => {
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
+                return a.name.localeCompare(b.name);
+            });
+
+            // 3) Sæt rank efter sortering
+            profiles.forEach((p, idx) => {
+                p.rank = idx + 1;
+            });
+
+            return profiles;
+        },
+
         // --- PROFILES MANAGEMENT (Create, Edit, Delete) ---
         handleFileUpload(event) {
             const file = event.target.files[0];
@@ -225,7 +264,23 @@ createApp({
                 const res = await axios.get(`${this.apiUrl}/profiles`, {
                     params: { t: Date.now() }
                 });
-                this.profiles = res.data;
+
+                // rå data fra API
+                let profiles = Array.isArray(res.data) ? res.data : [];
+
+                // flyt stats-logik til frontend
+                profiles = this.recalcStatsAndLeaderboard(profiles);
+
+                this.profiles = profiles;
+
+                // hvis valgt stats-profil ikke længere findes, reset
+                if (this.statsProfileId && !this.profiles.find(p => p.id === this.statsProfileId)) {
+                    this.statsProfileId = null;
+                    this.nbaTwin = null;
+                } else if (this.statsProfileId) {
+                    // opdater NBA twin hvis en profil allerede er valgt
+                    this.calculateNbaTwin();
+                }
             } catch (e) {
                 console.error("Fejl i loadProfiles:", e);
             }
@@ -299,7 +354,7 @@ createApp({
                 alert(msg);
             }
         },
-//
+
         async addScore(side) {
             if (!this.gameActive) return alert("Der er ingen aktiv kamp");
             if (this.winner) return alert("Kampen er allerede afgjort. Tryk 'RECORD RESULT' eller start en ny kamp.");
