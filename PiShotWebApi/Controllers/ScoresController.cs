@@ -2,7 +2,9 @@
 using PiShotWebApi.DTO;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
+using PiShotProject.ClassDB;
 using System.Net;
+using System.Linq;
 
 namespace PiShotWebApi.Controllers
 {
@@ -11,10 +13,12 @@ namespace PiShotWebApi.Controllers
     public class ScoresController : ControllerBase
     {
         private readonly IScoreRepository _repo;
+        private readonly PiShotDBContext _db;
 
-        public ScoresController(IScoreRepository repo)
+        public ScoresController(IScoreRepository repo, PiShotDBContext db)
         {
             _repo = repo;
+            _db = db;
         }
 
         [HttpPost]
@@ -100,16 +104,28 @@ namespace PiShotWebApi.Controllers
                 });
             }
 
-            // Her VED vi, at de har værdier → derfor .Value
-            (int total1, int total2) = _repo.GetScoresSinceGameStart(
-                gameEntity.Player1Id.Value,
-                gameEntity.Player2Id.Value,
-                gameEntity.StartTime.Value);
+            var p1Id = gameEntity.Player1Id.Value;
+            var p2Id = gameEntity.Player2Id.Value;
+            var start = gameEntity.StartTime.Value;
 
-            // Tiebreak-logik
+            // Totale mål siden kampstart
+            int total1 = _db.Scores
+                .Count(s => s.ProfileId == p1Id && s.ScoredAt >= start);
+
+            int total2 = _db.Scores
+                .Count(s => s.ProfileId == p2Id && s.ScoredAt >= start);
+
+            // Totale forsøg siden kampstart (inkl. dem hvor der scores)
+            int attempts1 = _db.ShotAttempts
+                .Count(a => a.ProfileId == p1Id && a.AttemptedAt >= start);
+
+            int attempts2 = _db.ShotAttempts
+                .Count(a => a.ProfileId == p2Id && a.AttemptedAt >= start);
+
+            // Tiebreak-logik: hvis begge står 5–5 og vi IKKE allerede er i tiebreak
             if (!gameEntity.IsTiebreak && total1 == 5 && total2 == 5)
             {
-                _repo.UpdateTiebreakStatus(gameEntity.Player1Id.Value, gameEntity.Player2Id.Value);
+                _repo.UpdateTiebreakStatus(p1Id, p2Id);
 
                 gameEntity.IsTiebreak = true;
                 gameEntity.TiebreakOffsetP1 = 5;
@@ -121,19 +137,21 @@ namespace PiShotWebApi.Controllers
                 IsTiebreak = gameEntity.IsTiebreak,
                 P1 = new PlayerScoreDTO
                 {
-                    Id = gameEntity.Player1Id.Value,
+                    Id = p1Id,
                     Name = gameEntity.Player1?.Name ?? "P1",
                     ProfileImage = gameEntity.Player1?.ProfileImage ?? "",
                     TotalScore = total1,
-                    VisualScore = total1 - gameEntity.TiebreakOffsetP1
+                    VisualScore = total1 - gameEntity.TiebreakOffsetP1,
+                    Attempts = attempts1
                 },
                 P2 = new PlayerScoreDTO
                 {
-                    Id = gameEntity.Player2Id.Value,
+                    Id = p2Id,
                     Name = gameEntity.Player2?.Name ?? "P2",
                     ProfileImage = gameEntity.Player2?.ProfileImage ?? "",
                     TotalScore = total2,
-                    VisualScore = total2 - gameEntity.TiebreakOffsetP2
+                    VisualScore = total2 - gameEntity.TiebreakOffsetP2,
+                    Attempts = attempts2
                 }
             };
 
