@@ -19,7 +19,7 @@ namespace PiShotWebApi.Controllers
             _repository = repository;
             _db = db;
         }
-
+        //
         // GET: api/profiles
         // Returnerer kun rå data (goals, attempts, wins, losses).
         // Alt med Accuracy, WinLossRatio og Rank beregnes på frontend.
