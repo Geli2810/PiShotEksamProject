@@ -1,4 +1,4 @@
-﻿namespace PiShotWebApi.DTO
+﻿namespace PiShotProject.DTO
 {
     public class ProfileDTO
     {

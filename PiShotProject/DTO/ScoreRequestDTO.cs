@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace PiShotWebApi.DTO
+namespace PiShotProject.DTO
 {
     public class ScoreRequest
     {

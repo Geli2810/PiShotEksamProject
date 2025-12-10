@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using PiShotProject.ClassDB;
+using PiShotProject.DTO;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
-using PiShotWebApi.DTO;
 
 namespace PiShotWebApi.Controllers
 {
@@ -27,43 +26,9 @@ namespace PiShotWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult GetAll()
         {
-            var profiles = _repository.GetAllProfiles().ToList();
+            var profilesWithStats = _repository.GetAllProfilesWithStats();
 
-            //// Hent alle rækker én gang
-            //var allScores = _db.Scores.AsNoTracking().ToList();
-            //var allAttempts = _db.ShotAttempts.AsNoTracking().ToList();
-            //var allGameResults = _db.GameResults.AsNoTracking().ToList();
-
-            var list = new List<ProfileDTO>();
-
-            //foreach (var p in profiles)
-            //{
-            //    var goals = allScores.Count(s => s.ProfileId == p.Id);
-            //    var attempts = allAttempts.Count(a => a.ProfileId == p.Id);
-            //    var wins = allGameResults.Count(g => g.WinnerId == p.Id);
-            //    var losses = allGameResults.Count(g => g.LoserId == p.Id);
-
-            //    list.Add(new ProfileDTO
-            //    {
-            //        Id = p.Id,
-            //        Name = p.Name,
-            //        ProfileImage = p.ProfileImage,
-
-            //        // kun rå tal – frontend regner videre
-            //        Goals = goals,
-            //        Attempts = attempts,
-            //        Wins = wins,
-            //        Losses = losses,
-
-            //        // disse er placeholders (frontend sætter rigtige værdier)
-            //        Accuracy = 0,
-            //        WinLossRatio = 0,
-            //        Rank = 0
-            //    });
-            //}
-
-            // Ingen sortering / rank her – det håndteres i frontend
-            return Ok(list);
+            return Ok(profilesWithStats);
         }
 
         // POST

@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PiShotWebApi.DTO;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using PiShotProject.ClassDB;
 using System.Net;
 using System.Linq;
+using PiShotProject.DTO;
 
 namespace PiShotWebApi.Controllers
 {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PiShotProject.ClassDB;
+using PiShotProject.DTO;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using System.Collections.Generic;
@@ -61,6 +62,27 @@ namespace PiShotProject.Repositories
             _dbContext.Profiles.Remove(existing);
             _dbContext.SaveChanges();
             return existing;
+        }
+
+        public List<ProfileDTO> GetAllProfilesWithStats()
+        {
+            return _dbContext.Profiles.AsNoTracking().Select(p => new ProfileDTO
+            {
+                Id = p.Id,
+                Name = p.Name,
+                ProfileImage = p.ProfileImage,
+
+                Goals = _dbContext.Scores.Count(s => s.ProfileId == p.Id),
+                Attempts = _dbContext.ShotAttempts.Count(a => a.ProfileId == p.Id),
+                Wins = _dbContext.GameResults.Count(g => g.WinnerId == p.Id),
+                Losses = _dbContext.GameResults.Count(g => g.LoserId == p.Id),
+
+                Accuracy = 0,
+                WinLossRatio = 0,
+                Rank = 0
+
+                
+            }).ToList();
         }
     }
 }
