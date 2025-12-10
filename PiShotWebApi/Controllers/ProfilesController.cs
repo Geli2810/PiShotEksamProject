@@ -20,12 +20,14 @@ namespace PiShotWebApi.Controllers
             _db = db;
         }
 
-        // GET
+        // GET: api/profiles
+        // Returnerer kun rå data (goals, attempts, wins, losses).
+        // Alt med Accuracy, WinLossRatio og Rank beregnes på frontend.
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult GetAll()
         {
-            var profiles = _repository.GetAllProfiles();
+            var profiles = _repository.GetAllProfiles().ToList();
 
             // Hent alle rækker én gang
             var allScores = _db.Scores.AsNoTracking().ToList();
@@ -36,54 +38,32 @@ namespace PiShotWebApi.Controllers
 
             foreach (var p in profiles)
             {
-                // Mål og forsøg
                 var goals = allScores.Count(s => s.ProfileId == p.Id);
                 var attempts = allAttempts.Count(a => a.ProfileId == p.Id);
-
-                double accuracy = 0;
-                if (attempts > 0)
-                {
-                    accuracy = Math.Round((double)goals * 100.0 / attempts, 0);
-                }
-
-                // GameResult har kun WinnerId og LoserId
                 var wins = allGameResults.Count(g => g.WinnerId == p.Id);
                 var losses = allGameResults.Count(g => g.LoserId == p.Id);
-
-                double winLossRatio = 0;
-                if (wins + losses > 0)
-                {
-                    winLossRatio = Math.Round((double)wins * 100.0 / (wins + losses), 0);
-                }
 
                 list.Add(new ProfileDTO
                 {
                     Id = p.Id,
                     Name = p.Name,
                     ProfileImage = p.ProfileImage,
+
+                    // kun rå tal – frontend regner videre
                     Goals = goals,
                     Attempts = attempts,
-                    Accuracy = (int)accuracy,
                     Wins = wins,
                     Losses = losses,
-                    WinLossRatio = (int)winLossRatio,
-                    Rank = 0 // sættes nedenfor
+
+                    // disse er placeholders (frontend sætter rigtige værdier)
+                    Accuracy = 0,
+                    WinLossRatio = 0,
+                    Rank = 0
                 });
             }
 
-            // Ranking: flest wins, så accuracy, så navn
-            var ordered = list
-                .OrderByDescending(x => x.Wins)
-                .ThenByDescending(x => x.Accuracy)
-                .ThenBy(x => x.Name)
-                .ToList();
-
-            for (int i = 0; i < ordered.Count; i++)
-            {
-                ordered[i].Rank = i + 1;
-            }
-
-            return Ok(ordered);
+            // Ingen sortering / rank her – det håndteres i frontend
+            return Ok(list);
         }
 
         // POST
