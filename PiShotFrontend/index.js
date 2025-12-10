@@ -299,7 +299,7 @@ createApp({
                 alert(msg);
             }
         },
-
+//
         async addScore(side) {
             if (!this.gameActive) return alert("Der er ingen aktiv kamp");
             if (this.winner) return alert("Kampen er allerede afgjort. Tryk 'RECORD RESULT' eller start en ny kamp.");
