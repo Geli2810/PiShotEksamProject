@@ -20,6 +20,7 @@ namespace PiShotWebApi.Controllers
         [HttpPost]
         [ProducesResponseType((int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
         public IActionResult AddScore([FromBody] ScoreRequest req)
         {
             if (req == null || req.ProfileId <= 0)
@@ -27,14 +28,27 @@ namespace PiShotWebApi.Controllers
                 return BadRequest("Ugyldigt ProfileId. ScoreRequest er påkrævet.");
             }
 
-            _repo.AddScore(req.ProfileId);
-
-            return CreatedAtAction(nameof(GetLive), null);
+            try
+            {
+                _repo.AddScore(req.ProfileId);
+                return CreatedAtAction(nameof(GetLive), null);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // F.eks. "Det er den anden spillers tur" eller "Der er ingen aktiv kamp"
+                return BadRequest(new { msg = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError,
+                    new { msg = "Uventet fejl ved AddScore", detail = ex.Message });
+            }
         }
 
         [HttpPost("shot_attempt")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
         public IActionResult AddAttempt([FromBody] ScoreRequest req)
         {
             if (req == null || req.ProfileId <= 0)
@@ -42,9 +56,20 @@ namespace PiShotWebApi.Controllers
                 return BadRequest("Ugyldigt ProfileId. ScoreRequest er påkrævet.");
             }
 
-            _repo.AddAttempt(req.ProfileId);
-
-            return NoContent();
+            try
+            {
+                _repo.AddAttempt(req.ProfileId);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { msg = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError,
+                    new { msg = "Uventet fejl ved AddAttempt", detail = ex.Message });
+            }
         }
 
         [HttpGet("live")]

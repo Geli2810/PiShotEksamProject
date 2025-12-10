@@ -26,9 +26,6 @@
                     <button @click="currentView = 'stats'" :class="{active: currentView === 'stats'}">
                         <i class="fas fa-chart-bar"></i> Stats
                     </button>
-                    <button @click="currentView = 'dev'" :class="{active: currentView === 'dev'}">
-                        <i class="fas fa-tools"></i> Dev
-                    </button>
                 </nav>
             </header>
 
@@ -164,45 +161,11 @@
                         </div>
                     </div>
 
-                    <!-- DEV TOOLS -->
-                    <div v-else-if="currentView === 'dev' && !gameActive" class="view-container">
-                        <div class="card dev-card">
-                            <h3>Developer Tools</h3>
-                            <div class="input-group vertical">
-                                <label>Player til simulation</label>
-                                <select v-model.number="devProfileId">
-                                    <option :value="null">-- Select Player --</option>
-                                    <option v-for="p in profiles" :value="p.id">{{p.name}}</option>
-                                </select>
-                            </div>
-                            <div class="dev-buttons">
-                                <button class="btn-primary" @click="devAddAttempt">
-                                    Add Attempt (scores/shot_attempt)
-                                </button>
-                                <button class="btn-primary" @click="devAddScore">
-                                    Add Score (scores)
-                                </button>
-                                <button class="btn-primary" @click="devDeclareWinner">
-                                    Declare Winner (game/declare_winner)
-                                </button>
-                                <button class="btn-primary" @click="devFinishGame">
-                                    Finish Game (game/finish)
-                                </button>
-                                <button class="btn-danger" @click="devStopGame">
-                                    Stop Game (game/stop)
-                                </button>
-                            </div>
-                            <p class="sub-text" style="margin-top:10px;">
-                                Brug dette til at teste jeres API uden at Pi'erne er i gang.
-                            </p>
-                        </div>
-                    </div>
-
                     <!-- LIVE GAME VIEW -->
                     <div v-else-if="gameActive" class="view-container game-view">
-                        <div class="live-badge">● LIVE MATCH</div>
+                        <div class="live-badge">● LIVE MATCH – FIRST TO 5</div>
                         <div v-if="isTiebreak" class="tiebreak-alert">
-                            OVERTIME: FIRST TO 5 (WIN BY 2)
+                            SUDDEN DEATH: ONE SHOT EACH
                         </div>
                         
                         <div v-if="winner" class="winner-modal">
@@ -221,12 +184,66 @@
                                 <img :src="p1Data.profileImage" class="avatar-game">
                                 <h2>{{p1Data.name}}</h2>
                                 <div class="score-digit">{{p1Data.visualScore}}</div>
+
+                                <!-- NY: lille shot attempt counter -->
+                                <div class="shot-attempts">
+                                    {{p1Data.attempts || 0}} shot attempts
+                                </div>
                             </div>
                             <div class="vs-badge">VS</div>
                             <div class="score-card p2" :class="{leading: isLeader(p2Data)}">
                                 <img :src="p2Data.profileImage" class="avatar-game">
                                 <h2>{{p2Data.name}}</h2>
                                 <div class="score-digit">{{p2Data.visualScore}}</div>
+
+                                <!-- NY: lille shot attempt counter -->
+                                <div class="shot-attempts">
+                                    {{p2Data.attempts || 0}} shot attempts
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LIVE CONTROL PANEL (tidligere Dev Tools) -->
+                        <div class="card game-controls-card">
+                            <h3>LIVE CONTROL PANEL</h3>
+                            <p class="sub-text">
+                                Første til 5 mål vinder. Ved 5–5 går kampen i sudden death: hver spiller får ét skud pr. runde. 
+                                Hvis kun én scorer i en runde, kan du erklære vinderen her.
+                            </p>
+                            <div class="control-grid">
+                                <div class="control-column">
+                                    <h4>{{p1Data.name || 'Player 1'}}</h4>
+                                    <div class="control-btn-row">
+                                        <button class="btn-small" @click="addAttempt('p1')">
+                                            <i class="fas fa-bullseye"></i> Shot Attempt
+                                        </button>
+                                        <button class="btn-small" @click="addScore('p1')">
+                                            <i class="fas fa-futbol"></i> Goal
+                                        </button>
+                                    </div>
+                                    <button class="btn-outline" @click="declareWinner('p1')">
+                                        <i class="fas fa-crown"></i> Declare Winner
+                                    </button>
+                                </div>
+                                <div class="control-column">
+                                    <h4>{{p2Data.name || 'Player 2'}}</h4>
+                                    <div class="control-btn-row">
+                                        <button class="btn-small" @click="addAttempt('p2')">
+                                            <i class="fas fa-bullseye"></i> Shot Attempt
+                                        </button>
+                                        <button class="btn-small" @click="addScore('p2')">
+                                            <i class="fas fa-futbol"></i> Goal
+                                        </button>
+                                    </div>
+                                    <button class="btn-outline" @click="declareWinner('p2')">
+                                        <i class="fas fa-crown"></i> Declare Winner
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="stop-row">
+                                <button class="btn-danger" @click="stopGame">
+                                    <i class="fas fa-stop-circle"></i> STOP GAME
+                                </button>
                             </div>
                         </div>
                     </div>

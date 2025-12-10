@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PiShotProject.ClassDB;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using PiShotWebApi.DTO;
@@ -10,10 +12,12 @@ namespace PiShotWebApi.Controllers
     public class ProfilesController : ControllerBase
     {
         private readonly IProfileRepository _repository;
+        private readonly PiShotDBContext _db;
 
-        public ProfilesController(IProfileRepository repository)
+        public ProfilesController(IProfileRepository repository, PiShotDBContext db)
         {
             _repository = repository;
+            _db = db;
         }
 
         // GET
@@ -22,21 +26,64 @@ namespace PiShotWebApi.Controllers
         public IActionResult GetAll()
         {
             var profiles = _repository.GetAllProfiles();
-            var list = profiles.Select(p => new ProfileDTO
-            {
-                Id = p.Id,
-                Name = p.Name,
-                ProfileImage = p.ProfileImage,
-                Goals = 0,
-                Attempts = 0,
-                Accuracy = 0,
-                Wins = 0,
-                Losses = 0,
-                WinLossRatio = 0,
-                Rank = 0
-            }).ToList();
 
-            return Ok(list);
+            // Hent alle rækker én gang
+            var allScores = _db.Scores.AsNoTracking().ToList();
+            var allAttempts = _db.ShotAttempts.AsNoTracking().ToList();
+            var allGameResults = _db.GameResults.AsNoTracking().ToList();
+
+            var list = new List<ProfileDTO>();
+
+            foreach (var p in profiles)
+            {
+                // Mål og forsøg
+                var goals = allScores.Count(s => s.ProfileId == p.Id);
+                var attempts = allAttempts.Count(a => a.ProfileId == p.Id);
+
+                double accuracy = 0;
+                if (attempts > 0)
+                {
+                    accuracy = Math.Round((double)goals * 100.0 / attempts, 0);
+                }
+
+                // GameResult har kun WinnerId og LoserId
+                var wins = allGameResults.Count(g => g.WinnerId == p.Id);
+                var losses = allGameResults.Count(g => g.LoserId == p.Id);
+
+                double winLossRatio = 0;
+                if (wins + losses > 0)
+                {
+                    winLossRatio = Math.Round((double)wins * 100.0 / (wins + losses), 0);
+                }
+
+                list.Add(new ProfileDTO
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    ProfileImage = p.ProfileImage,
+                    Goals = goals,
+                    Attempts = attempts,
+                    Accuracy = (int)accuracy,
+                    Wins = wins,
+                    Losses = losses,
+                    WinLossRatio = (int)winLossRatio,
+                    Rank = 0 // sættes nedenfor
+                });
+            }
+
+            // Ranking: flest wins, så accuracy, så navn
+            var ordered = list
+                .OrderByDescending(x => x.Wins)
+                .ThenByDescending(x => x.Accuracy)
+                .ThenBy(x => x.Name)
+                .ToList();
+
+            for (int i = 0; i < ordered.Count; i++)
+            {
+                ordered[i].Rank = i + 1;
+            }
+
+            return Ok(ordered);
         }
 
         // POST
