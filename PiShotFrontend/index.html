@@ -24,7 +24,7 @@
                         <i class="fas fa-users"></i> Profiles
                     </button>
                     <button @click="currentView = 'stats'" :class="{active: currentView === 'stats'}">
-                        <i class="fas fa-chart-bar"></i> Stats
+                        <i class="fas fa-chart-bar"></i> Leaderboard
                     </button>
                 </nav>
             </header>
@@ -89,15 +89,12 @@
                                     <img :src="p.profileImage" class="avatar">
                                     <div class="profile-text">
                                         <h4>{{p.name}}</h4>
-                                        <span class="sub-text">ID: {{p.id}}</span>
+                                        <span class="sub-text">Rank #{{p.rank}}</span>
                                     </div>
                                 </div>
                                 <div class="profile-actions">
-                                    <button class="action-btn edit" @click="openEditModal(p)">
-                                        <i class="fas fa-pen"></i>
-                                    </button>
-                                    <button class="action-btn delete" @click="deleteProfile(p.id)">
-                                        <i class="fas fa-trash"></i>
+                                    <button class="btn-small" @click="openViewProfile(p)">
+                                        <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
                             </div>
@@ -249,6 +246,61 @@
                     </div>
                 </transition>
             </main>
+
+            <transition name="fade">
+                <div v-if="viewingProfile" class="modal-overlay" @click.self="viewingProfile = null">
+                    <div class="modal-box view-modal-size">
+                        <!-- Header -->
+                         <div class="view-header">
+                            <img :src="viewingProfile.profileImage" class="avatar-large">
+                            <div>
+                                <h2>{{viewingProfile.name}}</h2>
+                                <span class="rank-tag">Rank #{{viewingProfile.rank}}</span>
+                            </div>
+                         </div>
+
+                         <!-- Detailed Stats Grid -->
+                         <div class="stats-detail-grid">
+                            <div class="stat-box">
+                                <span class="lbl">Wins</span>
+                                <span class="val text-success">{{viewingProfile.wins}}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="lbl">Losses</span>
+                                <span class="val text-danger">{{viewingProfile.losses}}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="lbl">Win %</span>
+                                <span class="val">{{viewingProfile.winLossRatio}}%</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="lbl">Goals</span>
+                                <span class="val">{{viewingProfile.goals}}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="lbl">Attempts</span>
+                                <span class="val">{{viewingProfile.attempts}}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="lbl">Accuracy</span>
+                                <span class="val">{{viewingProfile.accuracy}}%</span>
+                            </div>
+                         </div>
+
+                         <!-- Actions (Edit / Delete) -->
+                          <div class="modal-actions border-top">
+                            <button class="btn-outline" @click="openEditFromView">
+                                <i class="fas fa-pen"></i> Edit Profile
+                            </button>
+                            <button class="btn-danger" @click="deleteProfileFromView(viewingProfile.id)">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                          </div>
+
+                          <button class="btn-close-text" @click="viewingProfile = null">Close</button>
+                    </div>
+                </div>
+            </transition>
 
             <!-- EDIT MODAL -->
             <div v-if="editingProfile" class="modal-overlay">

@@ -15,6 +15,8 @@ createApp({
             newName: "",
             newImageBase64: "",
 
+            viewingProfile: null,
+
             // Edit vars
             editingProfile: null,
             editImageBase64: null,
@@ -49,6 +51,7 @@ createApp({
         this.loadNbaData();
         this.checkStatus(true);          // første load: tjek status én gang
         this.timer = setInterval(this.tick, 1000);
+        this.tick();
     },
     beforeUnmount() {
         if (this.timer) {
@@ -58,8 +61,14 @@ createApp({
     },
     methods: {
         async tick() {
+            // 1. Do the work
             await this.checkStatus();
             if (this.gameActive) await this.fetchLiveScores();
+
+            // 2. Schedule the next tick only after work is done
+            if (this.currentView) {
+                this.timer = setTimeout(this.tick, 1000);
+            }
         },
 
         // --- HJÆLPER: beregn stats + leaderboard i frontend ---
@@ -149,6 +158,21 @@ createApp({
             const reader = new FileReader();
             reader.onload = (e) => { this.editImageBase64 = e.target.result; };
             if (file) reader.readAsDataURL(file);
+        },
+
+        openViewProfile(profile) {
+            this.viewingProfile = profile;
+        },
+
+        openEditFromView() {
+            const profileToEdit = this.viewingProfile;
+            this.viewingProfile = null;
+            this.openEditModal(profileToEdit);
+        },
+
+        async deleteProfileFromView() {
+            await this.deleteProfile(id);
+            this.viewingProfile = null;
         },
 
         async saveProfileUpdate() {
