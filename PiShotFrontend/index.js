@@ -4,31 +4,31 @@ createApp({
     data() {
         return {
             apiUrl: "https://pishot-project-hqd6ffa0gvejbufu.canadacentral-01.azurewebsites.net/api",
-            
+
             currentView: 'lobby', // lobby | profiles | stats | dev
             gameActive: false,
-            
-            profiles: [], 
+
+            profiles: [],
             nbaData: [],
-            
+
             // Create New vars
-            newName: "", 
+            newName: "",
             newImageBase64: "",
-            
+
             // Edit vars
             editingProfile: null,
             editImageBase64: null,
 
             // Match vars
-            selectedP1: null, 
+            selectedP1: null,
             selectedP2: null,
-            
+
             // Stats vars
-            statsProfileId: null, 
+            statsProfileId: null,
             nbaTwin: null,
-            
+
             liveStats: { isTiebreak: false, p1: {}, p2: {} },
-            winner: null, 
+            winner: null,
             timer: null,
 
             // Dev tools
@@ -38,15 +38,23 @@ createApp({
     computed: {
         top10() { return this.profiles.slice(0, 10); },
         statsProfile() { return this.profiles.find(p => p.id === this.statsProfileId); },
-        p1Data() { return this.liveStats.p1 || { visualScore: 0, name: 'P1' }; },
-        p2Data() { return this.liveStats.p2 || { visualScore: 0, name: 'P2' }; },
+
+        // NY: default-object har også attempts
+        p1Data() { return this.liveStats.p1 || { id: null, visualScore: 0, name: 'P1', attempts: 0 }; },
+        p2Data() { return this.liveStats.p2 || { id: null, visualScore: 0, name: 'P2', attempts: 0 }; },
         isTiebreak() { return this.liveStats.isTiebreak; }
     },
     mounted() {
-        this.loadProfiles(); 
+        this.loadProfiles();
         this.loadNbaData();
         this.checkStatus(true);          // første load: tjek status én gang
         this.timer = setInterval(this.tick, 1000);
+    },
+    beforeUnmount() {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
     },
     methods: {
         async tick() {
@@ -70,7 +78,7 @@ createApp({
                     profileImage: this.newImageBase64
                 });
                 this.newName = "";
-                this.newImageBase64 = ""; 
+                this.newImageBase64 = "";
                 await this.loadProfiles();
             } catch (e) {
                 console.error("Fejl ved createProfile:", e);
@@ -83,7 +91,7 @@ createApp({
             try {
                 await axios.delete(`${this.apiUrl}/profiles/${id}`);
                 await this.loadProfiles();
-                
+
                 if (this.selectedP1 === id) this.selectedP1 = null;
                 if (this.selectedP2 === id) this.selectedP2 = null;
             } catch (e) {
@@ -93,7 +101,7 @@ createApp({
         },
 
         openEditModal(profile) {
-            this.editingProfile = { ...profile }; 
+            this.editingProfile = { ...profile };
             this.editImageBase64 = null;
         },
 
@@ -128,10 +136,9 @@ createApp({
                     params: { t: Date.now() }
                 });
                 const d = res.data;
-                // console.log("GAME STATUS:", d);
 
                 const isActive = d.isActive ?? d.IsActive ?? false;
-                
+
                 if (isActive) {
                     this.gameActive = true;
                     const winId = d.currentWinnerId ?? d.CurrentWinnerId;
@@ -147,6 +154,7 @@ createApp({
                 } else {
                     this.gameActive = false;
                     this.winner = null;
+                    this.liveStats = { isTiebreak: false, p1: {}, p2: {} };
                 }
             } catch (e) {
                 if (logOnError) {
@@ -162,26 +170,52 @@ createApp({
                     params: { t: Date.now() }
                 });
                 this.liveStats = res.data;
+
+                // NY: AUTO "FIRST TO 5"
+                const p1 = this.p1Data;
+                const p2 = this.p2Data;
+
+                // Kun i normal fase (ikke tiebreak) og hvis vi ikke allerede HAR en vinder
+                if (this.gameActive && !this.isTiebreak && !this.winner) {
+                    if (p1.visualScore >= 5 && p2.visualScore < 5) {
+                        await this.autoDeclareWinner('p1');
+                    } else if (p2.visualScore >= 5 && p1.visualScore < 5) {
+                        await this.autoDeclareWinner('p2');
+                    }
+                }
             } catch (e) {
                 console.error("Fejl i fetchLiveScores:", e);
             }
         },
 
+        // NY: bruges kun internt til auto-stop, ingen confirm/alert
+        async autoDeclareWinner(side) {
+            const player = side === 'p1' ? this.p1Data : this.p2Data;
+            if (!player.id) return;
+
+            try {
+                await axios.post(`${this.apiUrl}/game/declare_winner`, {
+                    winnerId: player.id
+                });
+                await this.checkStatus(true);
+            } catch (e) {
+                console.error("Fejl i autoDeclareWinner:", e);
+            }
+        },
+
+        // RECORD RESULT → stop game
         async finishGame() {
             try {
-                if (this.winner) {
-                    await axios.post(`${this.apiUrl}/game/finish`, {
-                        winnerId: this.winner.id
-                    });
-                }
+                await axios.post(`${this.apiUrl}/game/stop`);
             } catch (e) {
                 console.error("Fejl i finishGame:", e);
                 alert("Kunne ikke afslutte kampen");
                 return;
             }
 
-            this.gameActive = false; 
-            this.winner = null; 
+            this.gameActive = false;
+            this.winner = null;
+            this.liveStats = { isTiebreak: false, p1: {}, p2: {} };
             this.currentView = 'lobby';
             setTimeout(this.loadProfiles, 1000);
         },
@@ -198,10 +232,10 @@ createApp({
         },
 
         async loadNbaData() {
-            try { 
+            try {
                 const res = await axios.get('nba_2025.json');
                 this.nbaData = res.data;
-            } catch(e){
+            } catch (e) {
                 console.warn("Kunne ikke loade NBA-data (ok i udvikling)", e);
             }
         },
@@ -209,7 +243,7 @@ createApp({
         calculateNbaTwin() {
             if (!this.statsProfile || !this.nbaData.length) return;
             const uAcc = this.statsProfile.accuracy;
-            this.nbaTwin = this.nbaData.reduce((prev, curr) => 
+            this.nbaTwin = this.nbaData.reduce((prev, curr) =>
                 (Math.abs(curr.accuracy - uAcc) < Math.abs(prev.accuracy - uAcc) ? curr : prev));
         },
 
@@ -236,17 +270,91 @@ createApp({
             }
         },
 
-        getProfile(id) { 
-            return this.profiles.find(p => p.id === id) || {accuracy:0, profileImage:"", name:""}; 
+        getProfile(id) {
+            return this.profiles.find(p => p.id === id) || { accuracy: 0, profileImage: "", name: "" };
         },
 
-        isLeader(data) { 
+        isLeader(data) {
             if (data.visualScore == null) return false;
             return data.visualScore >= (this.p1Data.visualScore || 0) &&
                    data.visualScore >= (this.p2Data.visualScore || 0);
         },
 
-        // --- DEV TOOLS ---
+        // --- LIVE GAME CONTROL PANEL (bruges i game-viewet) ---
+        async addAttempt(side) {
+            if (!this.gameActive) return alert("Der er ingen aktiv kamp");
+            if (this.winner) return alert("Kampen er allerede afgjort. Tryk 'RECORD RESULT' eller start en ny kamp.");
+
+            const player = side === 'p1' ? this.p1Data : this.p2Data;
+            if (!player.id) return alert("Spiller er ikke loaded endnu");
+
+            try {
+                await axios.post(`${this.apiUrl}/scores/shot_attempt`, {
+                    profileId: player.id
+                });
+                // liveScore opdateres automatisk via tick -> fetchLiveScores
+            } catch (e) {
+                console.error("Fejl i addAttempt:", e);
+                const msg = e.response?.data?.msg || "Kunne ikke sende attempt";
+                alert(msg);
+            }
+        },
+//
+        async addScore(side) {
+            if (!this.gameActive) return alert("Der er ingen aktiv kamp");
+            if (this.winner) return alert("Kampen er allerede afgjort. Tryk 'RECORD RESULT' eller start en ny kamp.");
+
+            const player = side === 'p1' ? this.p1Data : this.p2Data;
+            if (!player.id) return alert("Spiller er ikke loaded endnu");
+
+            try {
+                await axios.post(`${this.apiUrl}/scores`, {
+                    profileId: player.id
+                });
+                // liveScore opdateres automatisk via tick -> fetchLiveScores
+            } catch (e) {
+                console.error("Fejl i addScore:", e);
+                const msg = e.response?.data?.msg || "Kunne ikke sende score";
+                alert(msg);
+            }
+        },
+
+        async declareWinner(side) {
+            if (!this.gameActive) return alert("Der er ingen aktiv kamp");
+            const player = side === 'p1' ? this.p1Data : this.p2Data;
+            if (!player.id) return alert("Spiller er ikke loaded endnu");
+
+            if (!confirm(`Erklær ${player.name} som vinder?`)) return;
+
+            try {
+                await axios.post(`${this.apiUrl}/game/declare_winner`, {
+                    winnerId: player.id
+                });
+                await this.checkStatus(true);
+                alert(`${player.name} er erklæret som vinder`);
+            } catch (e) {
+                console.error("Fejl i declareWinner:", e);
+                alert("Kunne ikke declare winner");
+            }
+        },
+
+        async stopGame() {
+            if (!confirm("Stoppe den aktuelle kamp uden at gemme resultat?")) return;
+            try {
+                await axios.post(`${this.apiUrl}/game/stop`);
+                await this.checkStatus(true);
+                this.gameActive = false;
+                this.winner = null;
+                this.liveStats = { isTiebreak: false, p1: {}, p2: {} };
+                this.currentView = 'lobby';
+                alert("Game stoppet");
+            } catch (e) {
+                console.error("Fejl i stopGame:", e);
+                alert("Kunne ikke stoppe game");
+            }
+        },
+
+        // --- GAMLE DEV TOOLS (kan stadig bruges fra dev-tab) ---
         async devAddAttempt() {
             if (!this.devProfileId) return alert("Select a player");
             try {
