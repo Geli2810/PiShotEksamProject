@@ -258,19 +258,14 @@ createApp({
                 const p2 = this.p2Data;
 
                 // Kun i normal fase (ikke tiebreak) og hvis vi ikke allerede HAR en vinder
-                if (this.gameActive && !this.winner) {
-                    if (p1.visualScore >= 5 && p2.visualScore < 5) {
-                        await this.autoDeclareWinner('p1');
-                    } else if (p2.visualScore >= 5 && p1.visualScore < 5) {
-                        await this.autoDeclareWinner('p2');
-                    }
-                } else {
+                if (p1.visualScore >= 5 && p2.visualScore < 5) {
                     if (p1.attempts === p2.attempts) {
-                        if (p1.visualScore > p2.visualScore) {
-                            await this.autoDeclareWinner('p1');
-                        } else if (p2.visualScore > p1.visualScore) {
-                            await this.autoDeclareWinner('p2');
-                        }
+                        await this.autoDeclareWinner('p1');
+                    }
+                }
+                else if (p2.visualScore >= 5 && p1.visualScore < 5) {
+                    if (p2.attempts === p1.attempts) {
+                        await this.autoDeclareWinner('p2');
                     }
                 }
             } catch (e) {
