@@ -40,7 +40,6 @@ namespace PiShotWebApi.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                // F.eks. "Det er den anden spillers tur" eller "Der er ingen aktiv kamp"
                 return BadRequest(new { msg = ex.Message });
             }
             catch (Exception ex)
@@ -83,7 +82,6 @@ namespace PiShotWebApi.Controllers
         {
             var gameEntity = await _repo.GetCurrentGameEntityAsync();
 
-            // Hvis der ikke er noget game eller ingen starttid → tom score
             if (gameEntity == null || !gameEntity.StartTime.HasValue)
             {
                 return Ok(new LiveScoreDTO
@@ -94,7 +92,6 @@ namespace PiShotWebApi.Controllers
                 });
             }
 
-            // Hvis spillerne ikke er sat (null), så giver det heller ikke mening at hente scores
             if (!gameEntity.Player1Id.HasValue || !gameEntity.Player2Id.HasValue)
             {
                 return Ok(new LiveScoreDTO
@@ -107,23 +104,27 @@ namespace PiShotWebApi.Controllers
 
             var p1Id = gameEntity.Player1Id.Value;
             var p2Id = gameEntity.Player2Id.Value;
-            var start = gameEntity.StartTime.Value;
 
-            // Totale mål siden kampstart
+            // --- CRITICAL FIX: SAFETY BUFFER ---
+            // We subtract 30 seconds to catch shots that might have mismatched timestamps
+            // or happened immediately at start.
+            var start = gameEntity.StartTime.Value.AddSeconds(-30);
+
+            // Totale mål
             int total1 = await _db.Scores
                 .CountAsync(s => s.ProfileId == p1Id && s.ScoredAt >= start);
 
             int total2 = await _db.Scores
                 .CountAsync(s => s.ProfileId == p2Id && s.ScoredAt >= start);
 
-            // Totale forsøg siden kampstart (inkl. dem hvor der scores)
+            // Totale forsøg
             int attempts1 = await _db.ShotAttempts
                 .CountAsync(a => a.ProfileId == p1Id && a.AttemptedAt >= start);
 
             int attempts2 = await _db.ShotAttempts
                 .CountAsync(a => a.ProfileId == p2Id && a.AttemptedAt >= start);
 
-            // Tiebreak-logik: hvis begge står 5–5 og vi IKKE allerede er i tiebreak
+            // Tiebreak-logik (5-5)
             if (!gameEntity.IsTiebreak && total1 == 5 && total2 == 5)
             {
                 await _repo.UpdateTiebreakStatusAsync(p1Id, p2Id);
