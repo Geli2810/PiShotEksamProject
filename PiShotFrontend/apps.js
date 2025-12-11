@@ -42,12 +42,11 @@ createApp({
         top10() { return this.profiles.slice(0, 10); },
         statsProfile() { return this.profiles.find(p => p.id === this.statsProfileId); },
 
-        // NY: default-object har også attempts
         p1Data() { return this.liveStats.p1 || { id: null, visualScore: 0, name: 'P1', attempts: 0 }; },
         p2Data() { return this.liveStats.p2 || { id: null, visualScore: 0, name: 'P2', attempts: 0 }; },
         isTiebreak() { return this.liveStats.isTiebreak; },
 
-        // Determine whose turn it is
+        // Visual helper: Indicates whose turn it is likely to be based on attempts
         isPlayer1Turn() {
             const p1Att = this.p1Data.attempts || 0;
             const p2Att = this.p2Data.attempts || 0;
@@ -57,7 +56,7 @@ createApp({
     mounted() {
         this.loadProfiles();
         this.loadNbaData();
-        this.checkStatus(true);          // første load: tjek status én gang
+        this.checkStatus(true);
         this.timer = setInterval(this.tick, 1000);
         this.tick();
     },
@@ -85,46 +84,35 @@ createApp({
             }
         },
 
-        // --- HJÆLPER: beregn stats + leaderboard i frontend ---
+        // --- STATS & LEADERBOARD ---
         recalcStatsAndLeaderboard(profiles) {
-            // 1) Beregn accuracy og win% for hver profil
             profiles.forEach(p => {
                 const goals = p.goals ?? 0;
                 const attempts = p.attempts ?? 0;
                 const wins = p.wins ?? 0;
                 const losses = p.losses ?? 0;
-
-                const accuracy =
-                    attempts > 0 ? Math.round((goals * 100.0) / attempts) : 0;
-
                 const totalGames = wins + losses;
-                const winLossRatio =
-                    totalGames > 0 ? Math.round((wins * 100.0) / totalGames) : 0;
 
                 p.goals = goals;
                 p.attempts = attempts;
                 p.wins = wins;
                 p.losses = losses;
-                p.accuracy = accuracy;
-                p.winLossRatio = winLossRatio;
+                p.accuracy = attempts > 0 ? Math.round((goals * 100.0) / attempts) : 0;
+                p.winLossRatio = totalGames > 0 ? Math.round((wins * 100.0) / totalGames) : 0;
             });
 
-            // 2) Sorter (flest wins -> accuracy -> navn)
+            // Sort: Wins -> Accuracy -> Name
             profiles.sort((a, b) => {
                 if (b.wins !== a.wins) return b.wins - a.wins;
                 if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
                 return a.name.localeCompare(b.name);
             });
 
-            // 3) Sæt rank efter sortering
-            profiles.forEach((p, idx) => {
-                p.rank = idx + 1;
-            });
-
+            profiles.forEach((p, idx) => { p.rank = idx + 1; });
             return profiles;
         },
 
-        // --- PROFILES MANAGEMENT (Create, Edit, Delete) ---
+        // --- PROFILES MANAGEMENT ---
         handleFileUpload(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -153,7 +141,6 @@ createApp({
             try {
                 await axios.delete(`${this.apiUrl}/profiles/${id}`);
                 await this.loadProfiles();
-
                 if (this.selectedP1 === id) this.selectedP1 = null;
                 if (this.selectedP2 === id) this.selectedP2 = null;
             } catch (e) {
@@ -185,7 +172,8 @@ createApp({
         },
 
         async deleteProfileFromView() {
-            await this.deleteProfile(id);
+            if(!this.viewingProfile) return;
+            await this.deleteProfile(this.viewingProfile.id);
             this.viewingProfile = null;
         },
 
@@ -206,20 +194,25 @@ createApp({
             }
         },
 
-        // --- GAME LOGIK ---
+        // --- GAME LOGIC ---
         async checkStatus(logOnError = false) {
             try {
+                // Fetch Game Status (Active? Winner Declared?)
                 const res = await axios.get(`${this.apiUrl}/game/current`, {
                     params: { t: Date.now() }
                 });
                 const d = res.data;
 
+                // Handle C# PascalCase vs camelCase
                 const isActive = d.isActive ?? d.IsActive ?? false;
 
                 if (isActive) {
                     this.gameActive = true;
                     const winId = d.currentWinnerId ?? d.CurrentWinnerId;
+                    
                     if (winId) {
+                        // WINNER FOUND! 
+                        // We rely entirely on the API/Python script to tell us this.
                         this.winner = {
                             id: winId,
                             name: d.winnerName || d.WinnerName,
@@ -236,67 +229,41 @@ createApp({
             } catch (e) {
                 if (logOnError) {
                     console.error("Fejl i checkStatus:", e);
-                    alert("Fejl ved hentning af game status. Tjek API-log.");
                 }
             }
         },
 
         async fetchLiveScores() {
-            if (this.IsProcessingAction) return; // NY: undgå fetch under processing
+            if (this.IsProcessingAction) return;
 
             try {
                 const res = await axios.get(`${this.apiUrl}/scores/live`, {
                     params: { t: Date.now() }
                 });
 
-                if (this.IsProcessingAction) return; // NY: undgå opdatering under processing
+                if (this.IsProcessingAction) return; 
 
                 this.liveStats = res.data;
-
-                // NY: AUTO "FIRST TO 5"
-                const p1 = this.p1Data;
-                const p2 = this.p2Data;
-
-                // Kun i normal fase (ikke tiebreak) og hvis vi ikke allerede HAR en vinder
-                if (this.gameActive && !this.winner) {
-                    if (p1.visualScore >= 5 && p2.visualScore < 5) {
-                        await this.autoDeclareWinner('p1');
-                    } else if (p2.visualScore >= 5 && p1.visualScore < 5) {
-                        await this.autoDeclareWinner('p2');
-                    }
-                } else {
-                    if (p1.attempts === p2.attempts) {
-                        if (p1.visualScore > p2.visualScore) {
-                            await this.autoDeclareWinner('p1');
-                        } else if (p2.visualScore > p1.visualScore) {
-                            await this.autoDeclareWinner('p2');
-                        }
-                    }
-                }
+                
+                // --- REMOVED FRONTEND AUTO-WIN LOGIC ---
+                // The Catapult Python script now calculates "First to 5" and Tiebreaks.
+                // We just display what the API gives us.
+                
             } catch (e) {
                 console.error("Fejl i fetchLiveScores:", e);
             }
         },
 
-        // NY: bruges kun internt til auto-stop, ingen confirm/alert
-        async autoDeclareWinner(side) {
-            const player = side === 'p1' ? this.p1Data : this.p2Data;
-            if (!player.id) return;
-
-            try {
-                await axios.post(`${this.apiUrl}/game/declare_winner`, {
-                    winnerId: player.id
-                });
-                await this.checkStatus(true);
-            } catch (e) {
-                console.error("Fejl i autoDeclareWinner:", e);
-            }
-        },
-
-        // RECORD RESULT → stop game
         async finishGame() {
             try {
-                await axios.post(`${this.apiUrl}/game/stop`);
+                // "RECORD RESULT" button triggers this
+                if(this.winner) {
+                     await axios.post(`${this.apiUrl}/game/finish`, {
+                        winnerId: this.winner.id
+                    });
+                } else {
+                     await axios.post(`${this.apiUrl}/game/stop`);
+                }
             } catch (e) {
                 console.error("Fejl i finishGame:", e);
                 alert("Kunne ikke afslutte kampen");
@@ -315,21 +282,14 @@ createApp({
                 const res = await axios.get(`${this.apiUrl}/profiles`, {
                     params: { t: Date.now() }
                 });
-
-                // rå data fra API
                 let profiles = Array.isArray(res.data) ? res.data : [];
-
-                // flyt stats-logik til frontend
                 profiles = this.recalcStatsAndLeaderboard(profiles);
-
                 this.profiles = profiles;
 
-                // hvis valgt stats-profil ikke længere findes, reset
                 if (this.statsProfileId && !this.profiles.find(p => p.id === this.statsProfileId)) {
                     this.statsProfileId = null;
                     this.nbaTwin = null;
                 } else if (this.statsProfileId) {
-                    // opdater NBA twin hvis en profil allerede er valgt
                     this.calculateNbaTwin();
                 }
             } catch (e) {
@@ -342,7 +302,7 @@ createApp({
                 const res = await axios.get('nba_2025.json');
                 this.nbaData = res.data;
             } catch (e) {
-                console.warn("Kunne ikke loade NBA-data (ok i udvikling)", e);
+                console.warn("Kunne ikke loade NBA-data", e);
             }
         },
 
@@ -358,17 +318,12 @@ createApp({
                 alert("Select 2 Players");
                 return;
             }
-
             try {
                 const payload = {
                     player1Id: Number(this.selectedP1),
                     player2Id: Number(this.selectedP2)
                 };
-                console.log("StartGame payload:", payload);
-
-                const res = await axios.post(`${this.apiUrl}/game/start`, payload);
-                console.log("Game started OK:", res.data);
-
+                await axios.post(`${this.apiUrl}/game/start`, payload);
                 await this.checkStatus(true);
             } catch (e) {
                 console.error("Fejl i startGame:", e);
@@ -386,85 +341,46 @@ createApp({
                    data.visualScore >= (this.p2Data.visualScore || 0);
         },
 
-        // --- LIVE GAME CONTROL PANEL (bruges i game-viewet) ---
+        // --- MANUAL CONTROLS (Only for fallback/testing) ---
         async addAttempt(side) {
-            if (!this.gameActive) return alert("Der er ingen aktiv kamp");
-            if (this.winner) return alert("Kampen er allerede afgjort. Tryk 'RECORD RESULT' eller start en ny kamp.");
-
+            if (!this.gameActive || this.winner) return;
             const player = side === 'p1' ? this.p1Data : this.p2Data;
-            if (!player.id) return alert("Spiller er ikke loaded endnu");
+            if (!player.id) return;
 
             this.IsProcessingAction = true;
-
-            if (!player.attempts) player.attempts = 0;
-            player.attempts++;
-
             try {
-                await axios.post(`${this.apiUrl}/scores/shot_attempt`, {
-                    profileId: player.id
-                });
-                // liveScore opdateres automatisk via tick -> fetchLiveScores
+                await axios.post(`${this.apiUrl}/scores/shot_attempt`, { profileId: player.id });
             } catch (e) {
-                player.attempts--;
-                console.error("Fejl i addAttempt:", e);
-                const msg = e.response?.data?.msg || "Kunne ikke sende attempt";
-                alert(msg);
+                alert(e.response?.data?.msg || "Fejl ved attempt");
             } finally {
-                setTimeout(async () => {
-                    await this.fetchLiveScores();
-                    this.IsProcessingAction = false;
-                }, 500);
+                setTimeout(async () => { await this.fetchLiveScores(); this.IsProcessingAction = false; }, 500);
             }
         },
 
         async addScore(side) {
-            if (!this.gameActive) return alert("Der er ingen aktiv kamp");
-            if (this.winner) return alert("Kampen er allerede afgjort. Tryk 'RECORD RESULT' eller start en ny kamp.");
-
+            if (!this.gameActive || this.winner) return;
             const player = side === 'p1' ? this.p1Data : this.p2Data;
-            if (!player.id) return alert("Spiller er ikke loaded endnu");
+            if (!player.id) return;
 
             this.IsProcessingAction = true;
-
-            player.visualScore++;
-            player.totalScore++;
-
-            if (!player.attempts) player.attempts = 0;
-            player.attempts++;
-
             try {
-                await axios.post(`${this.apiUrl}/scores`, {
-                    profileId: player.id
-                });
-                // liveScore opdateres automatisk via tick -> fetchLiveScores
+                await axios.post(`${this.apiUrl}/scores`, { profileId: player.id });
             } catch (e) {
-                player.visualScore--;
-                player.totalScore--;
-                player.attempts--;
-                console.error("Fejl i addScore:", e);
+                console.error(e);
             } finally {
-                setTimeout(async () => {
-                    await this.fetchLiveScores();
-                    this.IsProcessingAction = false;
-                }, 500);
+                setTimeout(async () => { await this.fetchLiveScores(); this.IsProcessingAction = false; }, 500);
             }
         },
 
         async declareWinner(side) {
-            if (!this.gameActive) return alert("Der er ingen aktiv kamp");
+            if (!this.gameActive) return;
             const player = side === 'p1' ? this.p1Data : this.p2Data;
-            if (!player.id) return alert("Spiller er ikke loaded endnu");
-
-            if (!confirm(`Erklær ${player.name} som vinder?`)) return;
+            if (!confirm(`Manual Override: Declare ${player.name} winner?`)) return;
 
             try {
-                await axios.post(`${this.apiUrl}/game/declare_winner`, {
-                    winnerId: player.id
-                });
+                await axios.post(`${this.apiUrl}/game/declare_winner`, { winnerId: player.id });
                 await this.checkStatus(true);
-                alert(`${player.name} er erklæret som vinder`);
             } catch (e) {
-                console.error("Fejl i declareWinner:", e);
                 alert("Kunne ikke declare winner");
             }
         },
@@ -474,78 +390,7 @@ createApp({
             try {
                 await axios.post(`${this.apiUrl}/game/stop`);
                 await this.checkStatus(true);
-                this.gameActive = false;
-                this.winner = null;
-                this.liveStats = { isTiebreak: false, p1: {}, p2: {} };
-                this.currentView = 'lobby';
-                alert("Game stoppet");
             } catch (e) {
-                console.error("Fejl i stopGame:", e);
-                alert("Kunne ikke stoppe game");
-            }
-        },
-
-        // --- GAMLE DEV TOOLS (kan stadig bruges fra dev-tab) ---
-        async devAddAttempt() {
-            if (!this.devProfileId) return alert("Select a player");
-            try {
-                await axios.post(`${this.apiUrl}/scores/shot_attempt`, {
-                    profileId: this.devProfileId
-                });
-                alert("Attempt sendt til API");
-            } catch (e) {
-                console.error("Fejl i devAddAttempt:", e);
-                alert("Kunne ikke sende attempt");
-            }
-        },
-
-        async devAddScore() {
-            if (!this.devProfileId) return alert("Select a player");
-            try {
-                await axios.post(`${this.apiUrl}/scores`, {
-                    profileId: this.devProfileId
-                });
-                alert("Score sendt til API");
-            } catch (e) {
-                console.error("Fejl i devAddScore:", e);
-                alert("Kunne ikke sende score");
-            }
-        },
-
-        async devDeclareWinner() {
-            if (!this.devProfileId) return alert("Select a player som vinder");
-            try {
-                await axios.post(`${this.apiUrl}/game/declare_winner`, {
-                    winnerId: this.devProfileId
-                });
-                alert("Winner declared");
-            } catch (e) {
-                console.error("Fejl i devDeclareWinner:", e);
-                alert("Kunne ikke declare winner");
-            }
-        },
-
-        async devFinishGame() {
-            if (!this.devProfileId) return alert("Select a player som vinder");
-            try {
-                await axios.post(`${this.apiUrl}/game/finish`, {
-                    winnerId: this.devProfileId
-                });
-                await this.checkStatus(true);
-                alert("Game finish kaldt");
-            } catch (e) {
-                console.error("Fejl i devFinishGame:", e);
-                alert("Kunne ikke finish game");
-            }
-        },
-
-        async devStopGame() {
-            try {
-                await axios.post(`${this.apiUrl}/game/stop`);
-                await this.checkStatus(true);
-                alert("Game stoppet (stop endpoint)");
-            } catch (e) {
-                console.error("Fejl i devStopGame:", e);
                 alert("Kunne ikke stoppe game");
             }
         }
