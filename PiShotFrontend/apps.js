@@ -235,10 +235,15 @@ createApp({
         },
 
         async fetchLiveScores() {
+            if (this.IsProcessingAction) return; // NY: undgå fetch under processing
+
             try {
                 const res = await axios.get(`${this.apiUrl}/scores/live`, {
                     params: { t: Date.now() }
                 });
+
+                if (this.IsProcessingAction) return; // NY: undgå opdatering under processing
+
                 this.liveStats = res.data;
 
                 // NY: AUTO "FIRST TO 5"
@@ -385,11 +390,13 @@ createApp({
                 });
                 // liveScore opdateres automatisk via tick -> fetchLiveScores
             } catch (e) {
+                player.attempts--;
                 console.error("Fejl i addAttempt:", e);
                 const msg = e.response?.data?.msg || "Kunne ikke sende attempt";
                 alert(msg);
             } finally {
-                setTimeout(() => {
+                setTimeout(async () => {
+                    await this.fetchLiveScores();
                     this.IsProcessingAction = false;
                 }, 500);
             }
@@ -421,7 +428,8 @@ createApp({
                 player.attempts--;
                 console.error("Fejl i addScore:", e);
             } finally {
-                setTimeout(() => {
+                setTimeout(async () => {
+                    await this.fetchLiveScores();
                     this.IsProcessingAction = false;
                 }, 500);
             }
