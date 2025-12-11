@@ -5,6 +5,7 @@ using PiShotProject.ClassDB;
 using System.Net;
 using System.Linq;
 using PiShotProject.DTO;
+using Microsoft.EntityFrameworkCore;
 
 namespace PiShotWebApi.Controllers
 {
@@ -25,7 +26,7 @@ namespace PiShotWebApi.Controllers
         [ProducesResponseType((int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
-        public IActionResult AddScore([FromBody] ScoreRequest req)
+        public async Task<IActionResult> AddScore([FromBody] ScoreRequest req)
         {
             if (req == null || req.ProfileId <= 0)
             {
@@ -34,7 +35,7 @@ namespace PiShotWebApi.Controllers
 
             try
             {
-                _repo.AddScore(req.ProfileId);
+                await _repo.AddScoreAsync(req.ProfileId);
                 return CreatedAtAction(nameof(GetLive), null);
             }
             catch (InvalidOperationException ex)
@@ -53,7 +54,7 @@ namespace PiShotWebApi.Controllers
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
-        public IActionResult AddAttempt([FromBody] ScoreRequest req)
+        public async Task<IActionResult> AddAttempt([FromBody] ScoreRequest req)
         {
             if (req == null || req.ProfileId <= 0)
             {
@@ -62,7 +63,7 @@ namespace PiShotWebApi.Controllers
 
             try
             {
-                _repo.AddAttempt(req.ProfileId);
+                await _repo.AddAttemptAsync(req.ProfileId);
                 return NoContent();
             }
             catch (InvalidOperationException ex)
@@ -78,9 +79,9 @@ namespace PiShotWebApi.Controllers
 
         [HttpGet("live")]
         [ProducesResponseType(typeof(LiveScoreDTO), (int)HttpStatusCode.OK)]
-        public IActionResult GetLive()
+        public async Task<IActionResult> GetLive()
         {
-            var gameEntity = _repo.GetCurrentGameEntity();
+            var gameEntity = await _repo.GetCurrentGameEntityAsync();
 
             // Hvis der ikke er noget game eller ingen starttid → tom score
             if (gameEntity == null || !gameEntity.StartTime.HasValue)
@@ -109,23 +110,23 @@ namespace PiShotWebApi.Controllers
             var start = gameEntity.StartTime.Value;
 
             // Totale mål siden kampstart
-            int total1 = _db.Scores
-                .Count(s => s.ProfileId == p1Id && s.ScoredAt >= start);
+            int total1 = await _db.Scores
+                .CountAsync(s => s.ProfileId == p1Id && s.ScoredAt >= start);
 
-            int total2 = _db.Scores
-                .Count(s => s.ProfileId == p2Id && s.ScoredAt >= start);
+            int total2 = await _db.Scores
+                .CountAsync(s => s.ProfileId == p2Id && s.ScoredAt >= start);
 
             // Totale forsøg siden kampstart (inkl. dem hvor der scores)
-            int attempts1 = _db.ShotAttempts
-                .Count(a => a.ProfileId == p1Id && a.AttemptedAt >= start);
+            int attempts1 = await _db.ShotAttempts
+                .CountAsync(a => a.ProfileId == p1Id && a.AttemptedAt >= start);
 
-            int attempts2 = _db.ShotAttempts
-                .Count(a => a.ProfileId == p2Id && a.AttemptedAt >= start);
+            int attempts2 = await _db.ShotAttempts
+                .CountAsync(a => a.ProfileId == p2Id && a.AttemptedAt >= start);
 
             // Tiebreak-logik: hvis begge står 5–5 og vi IKKE allerede er i tiebreak
             if (!gameEntity.IsTiebreak && total1 == 5 && total2 == 5)
             {
-                _repo.UpdateTiebreakStatus(p1Id, p2Id);
+                await _repo.UpdateTiebreakStatusAsync(p1Id, p2Id);
 
                 gameEntity.IsTiebreak = true;
                 gameEntity.TiebreakOffsetP1 = 5;

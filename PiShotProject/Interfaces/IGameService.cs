@@ -1,13 +1,14 @@
-﻿using PiShotProject.Models;
+﻿using PiShotProject.DTO;
+using PiShotProject.Models;
 
 namespace PiShotProject.Interfaces
 {
     public interface IGameService
     {
-        void StartNewGame(StartGameRequest request);
-        void DeclareWinner(int winnerId);
-        void RecordGameResult(int winnerId);
-        void StopCurrentGame();
-        GameStatusResponse GetCurrentStatus();
+        Task StartNewGameAsync(StartGameRequestDTO request);
+        Task DeclareWinnerAsync(int winnerId);
+        Task RecordGameResultAsync(int winnerId);
+        Task StopCurrentGameAsync();
+        Task<GameStatusResponse> GetCurrentStatusAsync();
     }
 }

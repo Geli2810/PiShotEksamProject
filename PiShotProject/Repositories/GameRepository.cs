@@ -14,25 +14,25 @@ namespace PiShotProject.Repositories
             _context = context;
         }
 
-        public CurrentGame? GetState()
+        public async Task<CurrentGame?> GetStateAsync()
         {
             // Loader spiller-navigationer så vi kan finde WinnerName/WinnerImage
-            return _context.CurrentGame
+            return await _context.CurrentGame
                 .Include(g => g.Player1)
                 .Include(g => g.Player2)
-                .FirstOrDefault(g => g.Id == 1);
+                .FirstOrDefaultAsync(g => g.Id == 1);
         }
 
-        public void AddResult(GameResult result)
+        public async Task AddResultAsync(GameResult result)
         {
-            _context.GameResults.Add(result);
-            _context.SaveChanges();
+            await _context.GameResults.AddAsync(result);
+            await _context.SaveChangesAsync();
         }
 
-        public void SaveState(CurrentGame game)
+        public async Task SaveStateAsync(CurrentGame game)
         {
             _context.CurrentGame.Update(game);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
     }
 }

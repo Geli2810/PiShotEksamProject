@@ -32,13 +32,13 @@ public class GameRepoTests
     #region GetState Tests
 
     [TestMethod]
-    public void GetState_WhenGameExists_ShouldReturnGameWithId1()
+    public async Task GetState_WhenGameExists_ShouldReturnGameWithId1()
     {
         // Arrange
         var p1 = new Profile { Name = "P1" };
         var p2 = new Profile { Name = "P2" };
         _context.Profiles.AddRange(p1, p2);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         var game = new CurrentGame
         {
@@ -48,10 +48,10 @@ public class GameRepoTests
             Player2Id = p2.Id
         };
         _context.CurrentGame.Add(game);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         // Act
-        var result = _repository.GetState();
+        var result = await _repository.GetStateAsync();
 
         // Assert
         Assert.IsNotNull(result);
@@ -59,7 +59,7 @@ public class GameRepoTests
     }
 
     [TestMethod]
-    public void GetState_ShouldIncludePlayerNavigationProperties()
+    public async Task GetState_ShouldIncludePlayerNavigationProperties()
     {
         // Arrange
         // We create profiles to ensure the .Include works correctly
@@ -77,10 +77,10 @@ public class GameRepoTests
 
         _context.Profiles.AddRange(p1, p2);
         _context.CurrentGame.Add(game);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         // Act
-        var result = _repository.GetState();
+        var result = await _repository.GetStateAsync();
 
         // Assert
         Assert.IsNotNull(result);
@@ -91,26 +91,26 @@ public class GameRepoTests
     }
 
     [TestMethod]
-    public void GetState_WhenNoGameId1_ShouldReturnNull()
+    public async Task GetState_WhenNoGameId1_ShouldReturnNull()
     {
         // Arrange
         // Add a game with a different ID to ensure filter works
         var game = new CurrentGame { Id = 2 };
         _context.CurrentGame.Add(game);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         // Act
-        var result = _repository.GetState();
+        var result = await _repository.GetStateAsync();
 
         // Assert
         Assert.IsNull(result);
     }
 
     [TestMethod]
-    public void GetState_WhenDbEmpty_ShouldReturnNull()
+    public async Task GetState_WhenDbEmpty_ShouldReturnNull()
     {
         // Act
-        var result = _repository.GetState();
+        var result = await _repository.GetStateAsync();
 
         // Assert
         Assert.IsNull(result);
@@ -121,7 +121,7 @@ public class GameRepoTests
     #region AddResult Tests
 
     [TestMethod]
-    public void AddResult_ShouldAddGameResultToDatabase()
+    public async Task AddResult_ShouldAddGameResultToDatabase()
     {
         // Arrange
         // 1. Create dummy profiles to serve as Winner and Loser
@@ -129,7 +129,7 @@ public class GameRepoTests
         var p2 = new Profile { Name = "Phil Mickelson" };
 
         _context.Profiles.AddRange(p1, p2);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         // 2. Create the result object using the IDs from above
         var resultObj = new GameResult
@@ -141,12 +141,12 @@ public class GameRepoTests
         };
 
         // Act
-        _repository.AddResult(resultObj);
+        await _repository.AddResultAsync(resultObj);
 
         // Assert
-        Assert.AreEqual(1, _context.GameResults.Count());
+        Assert.AreEqual(1, await _context.GameResults.CountAsync());
 
-        var storedResult = _context.GameResults.First();
+        var storedResult = await _context.GameResults.FirstAsync();
         Assert.AreEqual(p1.Id, storedResult.WinnerId);
         Assert.AreEqual(p2.Id, storedResult.LoserId);
         Assert.AreEqual("10-8", storedResult.GameScore);
@@ -157,13 +157,13 @@ public class GameRepoTests
     #region SaveState Tests
 
     [TestMethod]
-    public void SaveState_ShouldUpdateExistingGame()
+    public async Task SaveState_ShouldUpdateExistingGame()
     {
         // Arrange
         // 1. Seed the DB with initial state
         var initialGame = new CurrentGame { Id = 1, IsTiebreak = false, TiebreakOffsetP1 = 0 };
         _context.CurrentGame.Add(initialGame);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         // Detach the entity to simulate the object coming from a service/controller
         // rather than being the exact tracked instance in memory.
@@ -173,27 +173,27 @@ public class GameRepoTests
         var updatedGame = new CurrentGame { Id = 1, IsTiebreak = true, TiebreakOffsetP1 = 5 };
 
         // Act
-        _repository.SaveState(updatedGame);
+        await _repository.SaveStateAsync(updatedGame);
 
         // Assert
-        var dbGame = _context.CurrentGame.First();
+        var dbGame = await _context.CurrentGame.FirstAsync();
         Assert.IsTrue(dbGame.IsTiebreak, "IsTiebreak was not updated");
         Assert.AreEqual(5, dbGame.TiebreakOffsetP1, "Offset was not updated");
     }
 
     [TestMethod]
-    public void SaveState_ShouldPersistChanges()
+    public async Task SaveState_ShouldPersistChanges()
     {
         // Arrange
         // Testing that SaveChanges is actually called by checking context state
         var game = new CurrentGame { Id = 1 };
         _context.CurrentGame.Add(game);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         game.TiebreakOffsetP2 = 99;
 
         // Act
-        _repository.SaveState(game);
+        await _repository.SaveStateAsync(game);
 
         // Assert
         // We create a NEW context to verify data was actually written to the "DB"

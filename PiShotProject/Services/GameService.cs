@@ -1,4 +1,5 @@
 ﻿using System;
+using PiShotProject.DTO;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
 
@@ -13,9 +14,9 @@ namespace PiShotProject.Services
             _repository = repository;
         }
 
-        public void StartNewGame(StartGameRequest request)
+        public async Task StartNewGameAsync(StartGameRequestDTO request)
         {
-            var game = _repository.GetState() ?? new CurrentGame { Id = 1 };
+            var game = await _repository.GetStateAsync() ?? new CurrentGame { Id = 1 };
 
             game.Player1Id = request.Player1Id;
             game.Player2Id = request.Player2Id;
@@ -27,22 +28,22 @@ namespace PiShotProject.Services
             game.TiebreakOffsetP2 = 0;
             game.CurrentWinnerId = null;
 
-            _repository.SaveState(game);
+            await _repository.SaveStateAsync(game);
         }
 
-        public void DeclareWinner(int winnerId)
+        public async Task DeclareWinnerAsync(int winnerId)
         {
-            var game = _repository.GetState();
+            var game = await _repository.GetStateAsync();
             if (game != null && game.IsActive)
             {
                 game.CurrentWinnerId = winnerId;
-                _repository.SaveState(game);
+                await _repository.SaveStateAsync(game);
             }
         }
 
-        public GameStatusResponse GetCurrentStatus()
+        public async Task<GameStatusResponse> GetCurrentStatusAsync()
         {
-            var game = _repository.GetState();
+            var game = await _repository.GetStateAsync();
 
             if (game == null)
             {
@@ -85,9 +86,9 @@ namespace PiShotProject.Services
             };
         }
 
-        public void RecordGameResult(int winnerId)
+        public async Task RecordGameResultAsync(int winnerId)
         {
-            var game = _repository.GetState();
+            var game = await _repository.GetStateAsync();
             if (game == null || !game.IsActive)
             {
                 throw new InvalidOperationException("No active game found");
@@ -109,7 +110,7 @@ namespace PiShotProject.Services
                 PlayedOn = DateTime.UtcNow
             };
 
-            _repository.AddResult(result);
+            await _repository.AddResultAsync(result);
 
             game.IsActive = false;
             game.StartTime = null;
@@ -118,12 +119,12 @@ namespace PiShotProject.Services
             game.TiebreakOffsetP1 = 0;
             game.TiebreakOffsetP2 = 0;
 
-            _repository.SaveState(game);
+            await _repository.SaveStateAsync(game);
         }
 
-        public void StopCurrentGame()
+        public async Task StopCurrentGameAsync()
         {
-            var game = _repository.GetState();
+            var game = await _repository.GetStateAsync();
             if (game == null) return;
 
             game.IsActive = false;
@@ -133,7 +134,7 @@ namespace PiShotProject.Services
             game.TiebreakOffsetP1 = 0;
             game.TiebreakOffsetP2 = 0;
 
-            _repository.SaveState(game);
+            await _repository.SaveStateAsync(game);
         }
     }
 }

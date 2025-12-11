@@ -18,9 +18,9 @@ namespace PiShotProject.Repositories
         /// Registrerer et forsøg UDEN mål.
         /// Håndhæver at der er aktiv kamp og at spillerne SKIFTER til at skyde.
         /// </summary>
-        public void AddAttempt(int profileId)
+        public async Task AddAttemptAsync(int profileId)
         {
-            RegisterShot(profileId, isGoal: false);
+            await RegisterShotAsync(profileId, isGoal: false);
         }
 
         /// <summary>
@@ -28,9 +28,9 @@ namespace PiShotProject.Repositories
         /// Laver både ShotAttempt og Score i samme transaktion
         /// og håndhæver at spillerne SKIFTER til at skyde.
         /// </summary>
-        public void AddScore(int profileId)
+        public async Task AddScoreAsync(int profileId)
         {
-            RegisterShot(profileId, isGoal: true);
+            await RegisterShotAsync(profileId, isGoal: true);
         }
 
         /// <summary>
@@ -41,9 +41,10 @@ namespace PiShotProject.Repositories
         /// - Opretter altid en ShotAttempt
         /// - Opretter Score hvis isGoal = true
         /// </summary>
-        private void RegisterShot(int profileId, bool isGoal)
+        private async Task RegisterShotAsync(int profileId, bool isGoal)
         {
-            var game = GetCurrentGameEntity();
+            var game = await GetCurrentGameEntityAsync();
+
             if (game == null || !game.StartTime.HasValue)
             {
                 throw new InvalidOperationException("Der er ingen aktiv kamp.");
@@ -63,12 +64,12 @@ namespace PiShotProject.Repositories
             }
 
             // Find sidste forsøg i DENNE kamp (siden starttid) fra én af de to spillere
-            var lastAttempt = _context.ShotAttempts
+            var lastAttempt = await _context.ShotAttempts
                 .Where(a =>
                     a.AttemptedAt >= game.StartTime.Value &&
                     (a.ProfileId == p1Id || a.ProfileId == p2Id))
                 .OrderByDescending(a => a.AttemptedAt)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
 
             // Hvis sidste forsøg er lavet af samme spiller -> ikke din tur
             if (lastAttempt != null && lastAttempt.ProfileId == profileId)
@@ -84,7 +85,7 @@ namespace PiShotProject.Repositories
                 ProfileId = profileId,
                 AttemptedAt = now
             };
-            _context.ShotAttempts.Add(attempt);
+            await _context.ShotAttempts.AddAsync(attempt);
 
             // Hvis mål → opret også score
             if (isGoal)
@@ -94,42 +95,31 @@ namespace PiShotProject.Repositories
                     ProfileId = profileId,
                     ScoredAt = now
                 };
-                _context.Scores.Add(score);
+                    await _context.Scores.AddAsync(score);
             }
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public CurrentGame GetCurrentGameEntity()
+        public async Task<CurrentGame> GetCurrentGameEntityAsync()
         {
-            return _context.CurrentGame
+            return await _context.CurrentGame
                 .Include(cg => cg.Player1)
                 .Include(cg => cg.Player2)
-                .FirstOrDefault(cg => cg.Id == 1);
+                .FirstOrDefaultAsync(cg => cg.Id == 1);
         }
 
-        public (int P1Score, int P2Score) GetScoresSinceGameStart(int player1Id, int player2Id, DateTime gameStartTime)
+        public async Task UpdateTiebreakStatusAsync(int p1Id, int p2Id)
         {
-            int total1 = _context.Scores
-                .Count(s => s.ProfileId == player1Id && s.ScoredAt >= gameStartTime);
-
-            int total2 = _context.Scores
-                .Count(s => s.ProfileId == player2Id && s.ScoredAt >= gameStartTime);
-
-            return (total1, total2);
-        }
-
-        public void UpdateTiebreakStatus(int p1Id, int p2Id)
-        {
-            var game = _context.CurrentGame
-                .FirstOrDefault(cg => cg.Id == 1);
+            var game = await _context.CurrentGame
+                .FirstOrDefaultAsync(cg => cg.Id == 1);
 
             if (game != null && game.Player1Id == p1Id && game.Player2Id == p2Id)
             {
                 game.IsTiebreak = true;
                 game.TiebreakOffsetP1 = 5;
                 game.TiebreakOffsetP2 = 5;
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
         }
     }

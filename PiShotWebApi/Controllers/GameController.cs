@@ -21,23 +21,23 @@ namespace PiShotApi.Controllers
         [HttpPost("start")]
         [ProducesResponseType(typeof(object), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public IActionResult StartGame([FromBody] StartGameRequest req)
+        public async Task<IActionResult> StartGame([FromBody] StartGameRequestDTO req)
         {
             if (req == null || req.Player1Id <= 0 || req.Player2Id <= 0 || req.Player1Id == req.Player2Id)
             {
                 return BadRequest(new { msg = "Player1Id og Player2Id skal være gyldige og forskellige." });
             }
 
-            _gameService.StartNewGame(req);
+            await _gameService.StartNewGameAsync(req);
             return Ok(new { msg = "Game Started" });
         }
 
         // POST: /api/game/stop
         [HttpPost("stop")]
         [ProducesResponseType(typeof(object), (int)HttpStatusCode.OK)]
-        public IActionResult StopGame()
+        public async Task<IActionResult> StopGame()
         {
-            _gameService.StopCurrentGame();
+            await _gameService.StopCurrentGameAsync();
             return Ok(new { msg = "Game Stopped" });
         }
 
@@ -45,14 +45,14 @@ namespace PiShotApi.Controllers
         [HttpPost("declare_winner")]
         [ProducesResponseType(typeof(object), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public IActionResult DeclareWinner([FromBody] EndGameRequestDTO req)
+        public async Task<IActionResult> DeclareWinner([FromBody] EndGameRequestDTO req)
         {
             if (req == null || req.WinnerId <= 0)
             {
                 return BadRequest(new { msg = "WinnerId er påkrævet." });
             }
 
-            _gameService.DeclareWinner(req.WinnerId);
+            await _gameService.DeclareWinnerAsync(req.WinnerId);
             return Ok(new { msg = "Winner Declared" });
         }
 
@@ -60,7 +60,7 @@ namespace PiShotApi.Controllers
         [HttpPost("finish")]
         [ProducesResponseType(typeof(object), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public IActionResult FinishGame([FromBody] EndGameRequestDTO req)
+        public async Task<IActionResult> FinishGame([FromBody] EndGameRequestDTO req)
         {
             if (req == null || req.WinnerId <= 0)
             {
@@ -69,7 +69,7 @@ namespace PiShotApi.Controllers
 
             try
             {
-                _gameService.RecordGameResult(req.WinnerId);
+                await _gameService.RecordGameResultAsync(req.WinnerId);
                 return Ok(new { msg = "Game Result Recorded" });
             }
             catch (Exception ex)
@@ -82,9 +82,9 @@ namespace PiShotApi.Controllers
         // GET: /api/game/current
         [HttpGet("current")]
         [ProducesResponseType(typeof(GameStatusResponse), (int)HttpStatusCode.OK)]
-        public ActionResult<GameStatusResponse> GetCurrent()
+        public async Task<ActionResult<GameStatusResponse>> GetCurrent()
         {
-            var status = _gameService.GetCurrentStatus();
+            var status = await _gameService.GetCurrentStatusAsync();
             return Ok(status);
         }
     }

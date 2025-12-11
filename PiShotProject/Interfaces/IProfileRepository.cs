@@ -6,11 +6,11 @@ namespace PiShotProject.Interfaces
 {
     public interface IProfileRepository
     {
-        List<Profile> GetAllProfiles();
-        Profile? GetProfileById(int id);
-        Profile AddProfile(Profile profile);
-        Profile? UpdateProfile(Profile profile, int id);
-        Profile? DeleteProfile(int id);
-        List<ProfileDTO> GetAllProfilesWithStats();
+        Task<List<Profile>> GetAllProfilesAsync();
+        Task<Profile?> GetProfileByIdAsync(int id);
+        Task<Profile> AddProfileAsync(Profile profile);
+        Task<Profile?> UpdateProfileAsync(Profile profile, int id);
+        Task<Profile?> DeleteProfileAsync(int id);
+        Task<List<ProfileDTO>> GetAllProfilesWithStatsAsync();
     }
 }

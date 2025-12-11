@@ -9,13 +9,11 @@ namespace PiShotProject.Interfaces
 {
     public interface IScoreRepository
     {
-        void AddScore(int profileId);
-        void AddAttempt(int profileId);
+        Task AddScoreAsync(int profileId);
+        Task AddAttemptAsync(int profileId);
 
-        CurrentGame GetCurrentGameEntity();
+        Task<CurrentGame?> GetCurrentGameEntityAsync();
 
-        (int P1Score, int P2Score) GetScoresSinceGameStart(int player1Id, int player2Id, DateTime gameStartTime);
-
-        void UpdateTiebreakStatus(int p1Id, int p2Id);
+        Task UpdateTiebreakStatusAsync(int p1Id, int p2Id);
     }
 }

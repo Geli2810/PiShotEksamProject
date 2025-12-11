@@ -1,4 +1,5 @@
 using Moq;
+using PiShotProject.DTO;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using PiShotProject.Services;
@@ -22,19 +23,19 @@ public class GameServiceTests
     #region StartNewGame Tests
 
     [TestMethod]
-    public void StartNewGame_ShouldInitializeGameAndSave()
+    public async Task StartNewGame_ShouldInitializeGameAndSave()
     {
         // Arrange
-        var request = new StartGameRequest { Player1Id = 10, Player2Id = 20 };
+        var request = new StartGameRequestDTO { Player1Id = 10, Player2Id = 20 };
 
         // Simulate existing state being null (first game) or existing
-        _mockRepo.Setup(r => r.GetState()).Returns((CurrentGame?)null);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync((CurrentGame?)null);
 
         // Act
-        _service.StartNewGame(request);
+        await _service.StartNewGameAsync(request);
 
         // Assert
-        _mockRepo.Verify(r => r.SaveState(It.Is<CurrentGame>(g =>
+        _mockRepo.Verify(r => r.SaveStateAsync(It.Is<CurrentGame>(g =>
             g.Player1Id == 10 &&
             g.Player2Id == 20 &&
             g.IsActive == true &&
@@ -48,32 +49,32 @@ public class GameServiceTests
     #region DeclareWinner Tests
 
     [TestMethod]
-    public void DeclareWinner_WhenGameActive_ShouldUpdateWinnerAndSave()
+    public async Task DeclareWinner_WhenGameActive_ShouldUpdateWinnerAndSave()
     {
         // Arrange
         var activeGame = new CurrentGame { Id = 1, IsActive = true, Player1Id = 1, Player2Id = 2 };
-        _mockRepo.Setup(r => r.GetState()).Returns(activeGame);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync(activeGame);
 
         // Act
-        _service.DeclareWinner(1);
+        await _service.DeclareWinnerAsync(1);
 
         // Assert
         Assert.AreEqual(1, activeGame.CurrentWinnerId);
-        _mockRepo.Verify(r => r.SaveState(activeGame), Times.Once);
+        _mockRepo.Verify(r => r.SaveStateAsync(activeGame), Times.Once);
     }
 
     [TestMethod]
-    public void DeclareWinner_WhenGameInactive_ShouldDoNothing()
+    public async Task DeclareWinner_WhenGameInactive_ShouldDoNothing()
     {
         // Arrange
         var inactiveGame = new CurrentGame { Id = 1, IsActive = false };
-        _mockRepo.Setup(r => r.GetState()).Returns(inactiveGame);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync(inactiveGame);
 
         // Act
-        _service.DeclareWinner(1);
+        await _service.DeclareWinnerAsync(1);
 
         // Assert
-        _mockRepo.Verify(r => r.SaveState(It.IsAny<CurrentGame>()), Times.Never);
+        _mockRepo.Verify(r => r.SaveStateAsync(It.IsAny<CurrentGame>()), Times.Never);
     }
 
     #endregion
@@ -81,13 +82,13 @@ public class GameServiceTests
     #region GetCurrentStatus Tests
 
     [TestMethod]
-    public void GetCurrentStatus_NoGame_ShouldReturnInactiveStatus()
+    public async Task GetCurrentStatus_NoGame_ShouldReturnInactiveStatus()
     {
         // Arrange
-        _mockRepo.Setup(r => r.GetState()).Returns((CurrentGame?)null);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync((CurrentGame?)null);
 
         // Act
-        var result = _service.GetCurrentStatus();
+        var result = await _service.GetCurrentStatusAsync();
 
         // Assert
         Assert.IsFalse(result.IsActive);
@@ -96,14 +97,14 @@ public class GameServiceTests
     }
 
     [TestMethod]
-    public void GetCurrentStatus_ActiveGame_NoWinner_ShouldReturnStatus()
+    public async Task GetCurrentStatus_ActiveGame_NoWinner_ShouldReturnStatus()
     {
         // Arrange
         var game = new CurrentGame { IsActive = true, Player1Id = 10, Player2Id = 20, CurrentWinnerId = null };
-        _mockRepo.Setup(r => r.GetState()).Returns(game);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync(game);
 
         // Act
-        var result = _service.GetCurrentStatus();
+        var result = await _service.GetCurrentStatusAsync();
 
         // Assert
         Assert.IsTrue(result.IsActive);
@@ -112,7 +113,7 @@ public class GameServiceTests
     }
 
     [TestMethod]
-    public void GetCurrentStatus_WinnerIsPlayer1_ShouldReturnP1etails()
+    public async Task GetCurrentStatus_WinnerIsPlayer1_ShouldReturnP1etails()
     {
         // Arrange
         var p1 = new Profile { Id = 10, Name = "Alice", ProfileImage = "alice.jpg" };
@@ -128,10 +129,10 @@ public class GameServiceTests
             Player2 = p2
         };
 
-        _mockRepo.Setup(r => r.GetState()).Returns(game);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync(game);
 
         // Act
-        var result = _service.GetCurrentStatus();
+        var result = await _service.GetCurrentStatusAsync();
 
         // Assert
         Assert.AreEqual(10, result.CurrentWinnerId);
@@ -140,7 +141,7 @@ public class GameServiceTests
     }
 
     [TestMethod]
-    public void GetCurrentStatus_WinnerIsPlayer2_ShouldReturnP2Details()
+    public async Task GetCurrentStatus_WinnerIsPlayer2_ShouldReturnP2Details()
     {
         // Arrange
         var p1 = new Profile { Id = 10, Name = "Alice" };
@@ -156,10 +157,10 @@ public class GameServiceTests
             Player2 = p2
         };
 
-        _mockRepo.Setup(r => r.GetState()).Returns(game);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync(game);
         
         // Act
-        var result = _service.GetCurrentStatus();
+        var result = await _service.GetCurrentStatusAsync();
         
         // Assert
         Assert.AreEqual(20, result.CurrentWinnerId);
@@ -172,21 +173,21 @@ public class GameServiceTests
     #region RecordGameResult Tests
 
     [TestMethod]
-    public void RecordGameResult_ShouldAddResultAndResetGame()
+    public async Task RecordGameResult_ShouldAddResultAndResetGame()
     {
         // Arrange
         int p1Id = 10;
         int p2Id = 20;
         var game = new CurrentGame { IsActive = true, Player1Id = p1Id, Player2Id = p2Id };
 
-        _mockRepo.Setup(r => r.GetState()).Returns(game);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync(game);
 
         // Act
-        _service.RecordGameResult(p1Id); // P1 wins
+        await _service.RecordGameResultAsync(p1Id); // P1 wins
 
         // Assert
         // 1. Verify Result was added correctly
-        _mockRepo.Verify(r => r.AddResult(It.Is<GameResult>(res =>
+        _mockRepo.Verify(r => r.AddResultAsync(It.Is<GameResult>(res =>
             res.WinnerId == p1Id &&
             res.LoserId == p2Id &&
             (DateTime.UtcNow - res.PlayedOn).TotalSeconds < 5
@@ -196,29 +197,29 @@ public class GameServiceTests
         Assert.IsFalse(game.IsActive);
         Assert.IsNull(game.StartTime);
         Assert.IsNull(game.CurrentWinnerId);
-        _mockRepo.Verify(r => r.SaveState(game), Times.Once);
+        _mockRepo.Verify(r => r.SaveStateAsync(game), Times.Once);
     }
 
     [TestMethod]
-    public void RecordGameResult_NoActiveGame_ShouldThrowException()
+    public async Task RecordGameResult_NoActiveGame_ShouldThrowException()
     {
         // Arrange
-        _mockRepo.Setup(r => r.GetState()).Returns((CurrentGame?)null);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync((CurrentGame?)null);
 
         // Act & Assert
-        var ex = Assert.ThrowsException<InvalidOperationException>(() => _service.RecordGameResult(1));
+        var ex = await Assert.ThrowsExceptionAsync<InvalidOperationException>(() => _service.RecordGameResultAsync(1));
         Assert.AreEqual("No active game found", ex.Message);
     }
 
     [TestMethod]
-    public void RecordGameResult_GameInactive_ShouldThrowException()
+    public async Task RecordGameResult_GameInactive_ShouldThrowException()
     {
         // Arrange
         var game = new CurrentGame { IsActive = false };
-        _mockRepo.Setup(r => r.GetState()).Returns(game);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync(game);
 
         // Act & Assert
-        var ex = Assert.ThrowsException<InvalidOperationException>(() => _service.RecordGameResult(1));
+        var ex = await Assert.ThrowsExceptionAsync<InvalidOperationException>(() => _service.RecordGameResultAsync(1));
         Assert.AreEqual("No active game found", ex.Message);
     }
 
@@ -227,7 +228,7 @@ public class GameServiceTests
     #region StopCurrentGame Tests
 
     [TestMethod]
-    public void StopCurrentGame_ShouldResetStateAndSave()
+    public async Task StopCurrentGame_ShouldResetStateAndSave()
     {
         // Arrange
         var game = new CurrentGame
@@ -237,10 +238,10 @@ public class GameServiceTests
             IsTiebreak = true,
             CurrentWinnerId = 5
         };
-        _mockRepo.Setup(r => r.GetState()).Returns(game);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync(game);
 
         // Act
-        _service.StopCurrentGame();
+        await _service.StopCurrentGameAsync();
 
         // Assert
         Assert.IsFalse(game.IsActive);
@@ -248,20 +249,20 @@ public class GameServiceTests
         Assert.IsNull(game.CurrentWinnerId);
         Assert.IsFalse(game.IsTiebreak);
 
-        _mockRepo.Verify(r => r.SaveState(game), Times.Once);
+        _mockRepo.Verify(r => r.SaveStateAsync(game), Times.Once);
     }
 
     [TestMethod]
-    public void StopCurrentGame_IfNoGame_ShouldDoNothing()
+    public async Task StopCurrentGame_IfNoGame_ShouldDoNothing()
     {
         // Arrange
-        _mockRepo.Setup(r => r.GetState()).Returns((CurrentGame?)null);
+        _mockRepo.Setup(r => r.GetStateAsync()).ReturnsAsync((CurrentGame?)null);
         
         // Act
-        _service.StopCurrentGame();
+        await _service.StopCurrentGameAsync();
         
         // Assert
-        _mockRepo.Verify(r => r.SaveState(It.IsAny<CurrentGame>()), Times.Never);
+        _mockRepo.Verify(r => r.SaveStateAsync(It.IsAny<CurrentGame>()), Times.Never);
     }
 
     #endregion

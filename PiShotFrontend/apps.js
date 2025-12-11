@@ -386,6 +386,9 @@ createApp({
             const player = side === 'p1' ? this.p1Data : this.p2Data;
             if (!player.id) return alert("Spiller er ikke loaded endnu");
 
+            player.visualScore++;
+            player.totalScore++;
+
             try {
                 await axios.post(`${this.apiUrl}/scores`, {
                     profileId: player.id

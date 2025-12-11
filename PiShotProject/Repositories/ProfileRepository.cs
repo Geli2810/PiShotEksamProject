@@ -18,55 +18,55 @@ namespace PiShotProject.Repositories
             _dbContext = dbContext;
         }
 
-        public List<Profile> GetAllProfiles()
+        public async Task<List<Profile>> GetAllProfilesAsync()
         {
-            var profiles = _dbContext.Profiles
+            var profiles = await _dbContext.Profiles
                 .AsNoTracking()
-                .ToList();
+                .ToListAsync();
 
             return profiles;
         }
 
-        public Profile? GetProfileById(int id)
+        public async Task<Profile?> GetProfileByIdAsync(int id)
         {
-            return _dbContext.Profiles.FirstOrDefault(p => p.Id == id);
+            return await _dbContext.Profiles.FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public Profile AddProfile(Profile profile)
+        public async Task<Profile> AddProfileAsync(Profile profile)
         {
             profile.Id = 0;
             if (string.IsNullOrEmpty(profile.ProfileImage))
                 profile.ProfileImage = Profile.DefaultProfileImagePath;
 
-            _dbContext.Profiles.Add(profile);
-            _dbContext.SaveChanges();
+            await _dbContext.Profiles.AddAsync(profile);
+            await _dbContext.SaveChangesAsync();
             return profile;
         }
 
-        public Profile? UpdateProfile(Profile profile, int id)
+        public async Task<Profile?> UpdateProfileAsync(Profile profile, int id)
         {
-            var existing = GetProfileById(id);
+            var existing = await GetProfileByIdAsync(id);
             if (existing == null) return null;
 
             existing.Name = profile.Name;
             existing.ProfileImage = profile.ProfileImage;
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
             return existing;
         }
 
-        public Profile? DeleteProfile(int id)
+        public async Task<Profile?> DeleteProfileAsync(int id)
         {
-            var existing = GetProfileById(id);
+            var existing = await GetProfileByIdAsync(id);
             if (existing == null) return null;
 
             _dbContext.Profiles.Remove(existing);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
             return existing;
         }
 
-        public List<ProfileDTO> GetAllProfilesWithStats()
+        public async Task<List<ProfileDTO>> GetAllProfilesWithStatsAsync()
         {
-            return _dbContext.Profiles.AsNoTracking().Select(p => new ProfileDTO
+            return await _dbContext.Profiles.AsNoTracking().Select(p => new ProfileDTO
             {
                 Id = p.Id,
                 Name = p.Name,
@@ -82,7 +82,7 @@ namespace PiShotProject.Repositories
                 Rank = 0
 
                 
-            }).ToList();
+            }).ToListAsync();
         }
     }
 }

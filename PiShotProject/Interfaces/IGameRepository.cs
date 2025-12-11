@@ -4,8 +4,8 @@ namespace PiShotProject.Interfaces
 {
     public interface IGameRepository
     {
-        CurrentGame? GetState();
-        void SaveState(CurrentGame game);
-        void AddResult(GameResult result);
+        Task<CurrentGame?> GetStateAsync();
+        Task SaveStateAsync(CurrentGame game);
+        Task AddResultAsync(GameResult result);
     }
 }
