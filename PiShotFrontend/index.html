@@ -208,13 +208,16 @@
                                 Hvis kun én scorer i en runde, kan du erklære vinderen her.
                             </p>
                             <div class="control-grid">
-                                <div class="control-column">
-                                    <h4>{{p1Data.name || 'Player 1'}}</h4>
+                                <div class="control-column" :class="{ 'turn-active': isPlayer1Turn, 'turn-inactive': !isPlayer1Turn }">
+                                    <h4>
+                                        {{p1Data.name || 'Player 1'}}
+                                        <span v-if="isPlayer1Turn" class="turn-badge">YOUR TURN</span>
+                                    </h4>
                                     <div class="control-btn-row">
-                                        <button class="btn-small" @click="addAttempt('p1')">
+                                        <button class="btn-small" @click="addAttempt('p1')" :disable="IsProcessingAction || IsProcessingAction">
                                             <i class="fas fa-bullseye"></i> Shot Attempt
                                         </button>
-                                        <button class="btn-small" @click="addScore('p1')">
+                                        <button class="btn-small" @click="addScore('p1')" :disable="IsProcessingAction || IsProcessingAction">
                                             <i class="fas fa-futbol"></i> Goal
                                         </button>
                                     </div>
@@ -222,13 +225,17 @@
                                         <i class="fas fa-crown"></i> Declare Winner
                                     </button>
                                 </div>
-                                <div class="control-column">
-                                    <h4>{{p2Data.name || 'Player 2'}}</h4>
+
+                                <div class="control-column" :class="{ 'turn-active': !isPlayer1Turn, 'turn-inactive': isPlayer1Turn }">
+                                    <h4>
+                                        {{p2Data.name || 'Player 2'}}
+                                        <span v-if="!isPlayer1Turn" class="turn-badge">YOUR TURN</span>
+                                    </h4>
                                     <div class="control-btn-row">
-                                        <button class="btn-small" @click="addAttempt('p2')">
+                                        <button class="btn-small" @click="addAttempt('p2')" :disable="!isPlayer1Turn || IsProcessingAction">
                                             <i class="fas fa-bullseye"></i> Shot Attempt
                                         </button>
-                                        <button class="btn-small" @click="addScore('p2')">
+                                        <button class="btn-small" @click="addScore('p2')" :disable="isPlayer1Turn || IsProcessingAction">
                                             <i class="fas fa-futbol"></i> Goal
                                         </button>
                                     </div>

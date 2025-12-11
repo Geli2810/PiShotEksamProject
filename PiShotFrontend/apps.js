@@ -45,7 +45,14 @@ createApp({
         // NY: default-object har også attempts
         p1Data() { return this.liveStats.p1 || { id: null, visualScore: 0, name: 'P1', attempts: 0 }; },
         p2Data() { return this.liveStats.p2 || { id: null, visualScore: 0, name: 'P2', attempts: 0 }; },
-        isTiebreak() { return this.liveStats.isTiebreak; }
+        isTiebreak() { return this.liveStats.isTiebreak; },
+
+        // Determine whose turn it is
+        isPlayer1Turn() {
+            const p1Att = this.p1Data.attempts || 0;
+            const p2Att = this.p2Data.attempts || 0;
+            return p1Att === p2Att;
+        }
     },
     mounted() {
         this.loadProfiles();
