@@ -16,6 +16,7 @@ createApp({
             newImageBase64: "",
 
             viewingProfile: null,
+            IsProcessingAction: false,
 
             // Edit vars
             editingProfile: null,
@@ -61,11 +62,17 @@ createApp({
     },
     methods: {
         async tick() {
-            // 1. Do the work
+            // 1. If we are currently sending data, DO NOT fetch (prevents glitching)
+            if (this.IsProcessingAction) {
+                if (this.currentView) this.timer = setTimeout(this.tick, 1000);
+                return;
+            }
+
+            // 2. Do the work
             await this.checkStatus();
             if (this.gameActive) await this.fetchLiveScores();
 
-            // 2. Schedule the next tick only after work is done
+            // 3. Schedule the next tick only after work is done
             if (this.currentView) {
                 this.timer = setTimeout(this.tick, 1000);
             }
@@ -367,6 +374,11 @@ createApp({
             const player = side === 'p1' ? this.p1Data : this.p2Data;
             if (!player.id) return alert("Spiller er ikke loaded endnu");
 
+            this.IsProcessingAction = true;
+
+            if (!player.attempts) player.attempts = 0;
+            player.attempts++;
+
             try {
                 await axios.post(`${this.apiUrl}/scores/shot_attempt`, {
                     profileId: player.id
@@ -376,6 +388,10 @@ createApp({
                 console.error("Fejl i addAttempt:", e);
                 const msg = e.response?.data?.msg || "Kunne ikke sende attempt";
                 alert(msg);
+            } finally {
+                setTimeout(() => {
+                    this.IsProcessingAction = false;
+                }, 500);
             }
         },
 
@@ -386,8 +402,13 @@ createApp({
             const player = side === 'p1' ? this.p1Data : this.p2Data;
             if (!player.id) return alert("Spiller er ikke loaded endnu");
 
+            this.IsProcessingAction = true;
+
             player.visualScore++;
             player.totalScore++;
+
+            if (!player.attempts) player.attempts = 0;
+            player.attempts++;
 
             try {
                 await axios.post(`${this.apiUrl}/scores`, {
@@ -395,9 +416,14 @@ createApp({
                 });
                 // liveScore opdateres automatisk via tick -> fetchLiveScores
             } catch (e) {
+                player.visualScore--;
+                player.totalScore--;
+                player.attempts--;
                 console.error("Fejl i addScore:", e);
-                const msg = e.response?.data?.msg || "Kunne ikke sende score";
-                alert(msg);
+            } finally {
+                setTimeout(() => {
+                    this.IsProcessingAction = false;
+                }, 500);
             }
         },
 

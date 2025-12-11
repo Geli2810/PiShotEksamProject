@@ -148,6 +148,14 @@ input:focus, select:focus { border-color: var(--accent); }
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
+.btn-small:active {
+    transform: scale(0.95);
+    background-color: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+
 .btn-small:hover {
     border-color: var(--accent);
 }
