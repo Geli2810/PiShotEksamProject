@@ -244,11 +244,22 @@ createApp({
                 if (this.IsProcessingAction) return; 
 
                 this.liveStats = res.data;
-                
-                // --- REMOVED FRONTEND AUTO-WIN LOGIC ---
-                // The Catapult Python script now calculates "First to 5" and Tiebreaks.
-                // We just display what the API gives us.
-                
+
+                // NY: AUTO "FIRST TO 5"
+                const p1 = this.p1Data;
+                const p2 = this.p2Data;
+
+                // Kun i normal fase (ikke tiebreak) og hvis vi ikke allerede HAR en vinder
+                if (p1.visualScore >= 5 && p2.visualScore < 5) {
+                    if (p1.attempts === p2.attempts) {
+                        await this.autoDeclareWinner('p1');
+                    }
+                }
+                else if (p2.visualScore >= 5 && p1.visualScore < 5) {
+                    if (p2.attempts === p1.attempts) {
+                        await this.autoDeclareWinner('p2');
+                    }
+                }
             } catch (e) {
                 console.error("Fejl i fetchLiveScores:", e);
             }

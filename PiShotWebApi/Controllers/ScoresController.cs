@@ -3,7 +3,6 @@ using PiShotProject.Interfaces;
 using PiShotProject.Models;
 using PiShotProject.ClassDB;
 using System.Net;
-using System.Linq;
 using PiShotProject.DTO;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,57 +21,59 @@ namespace PiShotWebApi.Controllers
             _db = db;
         }
 
+        // POST: api/scores (Called when GOAL is detected)
         [HttpPost]
-        [ProducesResponseType((int)HttpStatusCode.Created)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> AddScore([FromBody] ScoreRequest req)
         {
             if (req == null || req.ProfileId <= 0)
             {
-                return BadRequest("Ugyldigt ProfileId. ScoreRequest er påkrævet.");
+                return BadRequest(new { msg = "Invalid ProfileId." });
             }
 
             try
             {
+                // Logic C: Only adds a score, looks for existing attempt
                 await _repo.AddScoreAsync(req.ProfileId);
-                return CreatedAtAction(nameof(GetLive), null);
+                return Ok(new { msg = "Goal Registered" });
             }
             catch (InvalidOperationException ex)
             {
+                // Returns 400 if no attempt was found or game inactive
                 return BadRequest(new { msg = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode((int)HttpStatusCode.InternalServerError,
-                    new { msg = "Uventet fejl ved AddScore", detail = ex.Message });
+                return StatusCode(500, new { msg = "Internal Error", detail = ex.Message });
             }
         }
 
+        // POST: api/scores/shot_attempt (Called when Servo fires)
         [HttpPost("shot_attempt")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> AddAttempt([FromBody] ScoreRequest req)
         {
             if (req == null || req.ProfileId <= 0)
             {
-                return BadRequest("Ugyldigt ProfileId. ScoreRequest er påkrævet.");
+                return BadRequest(new { msg = "Invalid ProfileId." });
             }
 
             try
             {
+                // Logic C: Creates attempt and checks "Whose turn is it?"
                 await _repo.AddAttemptAsync(req.ProfileId);
                 return NoContent();
             }
             catch (InvalidOperationException ex)
             {
+                // Returns 400 if it is not this player's turn
                 return BadRequest(new { msg = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode((int)HttpStatusCode.InternalServerError,
-                    new { msg = "Uventet fejl ved AddAttempt", detail = ex.Message });
+                return StatusCode(500, new { msg = "Internal Error", detail = ex.Message });
             }
         }
 
@@ -82,17 +83,8 @@ namespace PiShotWebApi.Controllers
         {
             var gameEntity = await _repo.GetCurrentGameEntityAsync();
 
-            if (gameEntity == null || !gameEntity.StartTime.HasValue)
-            {
-                return Ok(new LiveScoreDTO
-                {
-                    IsTiebreak = false,
-                    P1 = new PlayerScoreDTO(),
-                    P2 = new PlayerScoreDTO()
-                });
-            }
-
-            if (!gameEntity.Player1Id.HasValue || !gameEntity.Player2Id.HasValue)
+            // Default empty state if no game is running
+            if (gameEntity == null || !gameEntity.StartTime.HasValue || !gameEntity.Player1Id.HasValue || !gameEntity.Player2Id.HasValue)
             {
                 return Ok(new LiveScoreDTO
                 {
@@ -104,31 +96,21 @@ namespace PiShotWebApi.Controllers
 
             var p1Id = gameEntity.Player1Id.Value;
             var p2Id = gameEntity.Player2Id.Value;
+            var start = gameEntity.StartTime.Value;
 
-            // --- CRITICAL FIX: SAFETY BUFFER ---
-            // We subtract 30 seconds to catch shots that might have mismatched timestamps
-            // or happened immediately at start.
-            var start = gameEntity.StartTime.Value.AddSeconds(-30);
+            // Count Scores (Goals)
+            int total1 = await _db.Scores.CountAsync(s => s.ProfileId == p1Id && s.ScoredAt >= start);
+            int total2 = await _db.Scores.CountAsync(s => s.ProfileId == p2Id && s.ScoredAt >= start);
 
-            // Totale mål
-            int total1 = await _db.Scores
-                .CountAsync(s => s.ProfileId == p1Id && s.ScoredAt >= start);
+            // Count Attempts
+            int attempts1 = await _db.ShotAttempts.CountAsync(a => a.ProfileId == p1Id && a.AttemptedAt >= start);
+            int attempts2 = await _db.ShotAttempts.CountAsync(a => a.ProfileId == p2Id && a.AttemptedAt >= start);
 
-            int total2 = await _db.Scores
-                .CountAsync(s => s.ProfileId == p2Id && s.ScoredAt >= start);
-
-            // Totale forsøg
-            int attempts1 = await _db.ShotAttempts
-                .CountAsync(a => a.ProfileId == p1Id && a.AttemptedAt >= start);
-
-            int attempts2 = await _db.ShotAttempts
-                .CountAsync(a => a.ProfileId == p2Id && a.AttemptedAt >= start);
-
-            // Tiebreak-logik (5-5)
+            // Check Tiebreak Condition (5-5)
             if (!gameEntity.IsTiebreak && total1 == 5 && total2 == 5)
             {
                 await _repo.UpdateTiebreakStatusAsync(p1Id, p2Id);
-
+                // Update local variables for visual correctness immediately
                 gameEntity.IsTiebreak = true;
                 gameEntity.TiebreakOffsetP1 = 5;
                 gameEntity.TiebreakOffsetP2 = 5;

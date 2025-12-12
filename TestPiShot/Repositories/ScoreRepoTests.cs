@@ -37,8 +37,16 @@ public class ScoreRepoTests
         // Arrange
         int profileId = 10;
 
-        var game = new CurrentGame { Id = 1, StartTime = DateTime.UtcNow, Player1Id = 10, Player2Id = 20 };
+        var game = new CurrentGame { Id = 1, StartTime = DateTime.UtcNow, Player1Id = 10, Player2Id = 20, IsActive = true };
         _context.CurrentGame.Add(game);
+        await _context.SaveChangesAsync();
+
+        var preExistingAttempt = new ShotAttempt
+        {
+            ProfileId = profileId,
+            AttemptedAt = DateTime.UtcNow
+        };
+        await _context.ShotAttempts.AddAsync(preExistingAttempt);
         await _context.SaveChangesAsync();
 
         // Act
@@ -50,7 +58,7 @@ public class ScoreRepoTests
         Assert.AreEqual(profileId, score.ProfileId);
 
         // Check if date is recent (within last second)
-        Assert.IsTrue((DateTime.Now - score.ScoredAt.Value).TotalSeconds < 1, "ScoredAt time is incorrect");
+        Assert.IsTrue((DateTime.UtcNow - score.ScoredAt.Value).TotalSeconds < 1, "ScoredAt time is incorrect");
     }
 
     #endregion
@@ -63,7 +71,7 @@ public class ScoreRepoTests
         // Arrange
         int profileId = 5;
 
-        var game = new CurrentGame { Id = 1, StartTime = DateTime.UtcNow, Player1Id = 5, Player2Id = 6 };
+        var game = new CurrentGame { Id = 1, StartTime = DateTime.UtcNow.AddSeconds(-1), Player1Id = 5, Player2Id = 6, IsActive = true };
         _context.CurrentGame.Add(game);
         await _context.SaveChangesAsync();
 
@@ -76,7 +84,7 @@ public class ScoreRepoTests
         Assert.AreEqual(profileId, attempt.ProfileId);
 
         // Check if date is recent
-        Assert.IsTrue((DateTime.Now - attempt.AttemptedAt).TotalSeconds < 1, "AttemptedAt time is incorrect");
+        Assert.IsTrue((DateTime.UtcNow - attempt.AttemptedAt).TotalSeconds < 1, "AttemptedAt time is incorrect");
     }
 
     #endregion

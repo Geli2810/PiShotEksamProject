@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PiShotProject.ClassDB;
 using PiShotProject.Interfaces;
 using PiShotProject.Models;
-using PiShotProject.ClassDB;
 
 namespace PiShotProject.Repositories
 {
@@ -14,94 +14,7 @@ namespace PiShotProject.Repositories
             _context = context;
         }
 
-        /// <summary>
-        /// Registrerer et forsøg UDEN mål.
-        /// Håndhæver at der er aktiv kamp og at spillerne SKIFTER til at skyde.
-        /// </summary>
-        public async Task AddAttemptAsync(int profileId)
-        {
-            await RegisterShotAsync(profileId, isGoal: false);
-        }
-
-        /// <summary>
-        /// Registrerer et forsøg MED mål.
-        /// Laver både ShotAttempt og Score i samme transaktion
-        /// og håndhæver at spillerne SKIFTER til at skyde.
-        /// </summary>
-        public async Task AddScoreAsync(int profileId)
-        {
-            await RegisterShotAsync(profileId, isGoal: true);
-        }
-
-        /// <summary>
-        /// Fælles logik for skud (forsøg + evt. mål).
-        /// - Tjekker at der findes en aktiv kamp
-        /// - Tjekker at profilen er en af spillerne i kampen
-        /// - Tjekker at det ikke er samme spiller som skød sidst
-        /// - Opretter altid en ShotAttempt
-        /// - Opretter Score hvis isGoal = true
-        /// </summary>
-        private async Task RegisterShotAsync(int profileId, bool isGoal)
-        {
-            var game = await GetCurrentGameEntityAsync();
-
-            if (game == null || !game.StartTime.HasValue)
-            {
-                throw new InvalidOperationException("Der er ingen aktiv kamp.");
-            }
-
-            if (!game.Player1Id.HasValue || !game.Player2Id.HasValue)
-            {
-                throw new InvalidOperationException("Kampen har ikke to aktive spillere.");
-            }
-
-            var p1Id = game.Player1Id.Value;
-            var p2Id = game.Player2Id.Value;
-
-            if (profileId != p1Id && profileId != p2Id)
-            {
-                throw new InvalidOperationException("Spilleren er ikke en del af den aktive kamp.");
-            }
-
-            // Find sidste forsøg i DENNE kamp (siden starttid) fra én af de to spillere
-            var lastAttempt = await _context.ShotAttempts
-                .Where(a =>
-                    a.AttemptedAt >= game.StartTime.Value &&
-                    (a.ProfileId == p1Id || a.ProfileId == p2Id))
-                .OrderByDescending(a => a.AttemptedAt)
-                .FirstOrDefaultAsync();
-
-            // Hvis sidste forsøg er lavet af samme spiller -> ikke din tur
-            if (lastAttempt != null && lastAttempt.ProfileId == profileId)
-            {
-                throw new InvalidOperationException("Det er den anden spillers tur til at skyde.");
-            }
-
-            var now = DateTime.Now;
-
-            // Opret forsøg
-            var attempt = new ShotAttempt
-            {
-                ProfileId = profileId,
-                AttemptedAt = now
-            };
-            await _context.ShotAttempts.AddAsync(attempt);
-
-            // Hvis mål → opret også score
-            if (isGoal)
-            {
-                var score = new Score
-                {
-                    ProfileId = profileId,
-                    ScoredAt = now
-                };
-                    await _context.Scores.AddAsync(score);
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<CurrentGame> GetCurrentGameEntityAsync()
+        public async Task<CurrentGame?> GetCurrentGameEntityAsync()
         {
             return await _context.CurrentGame
                 .Include(cg => cg.Player1)
@@ -109,10 +22,96 @@ namespace PiShotProject.Repositories
                 .FirstOrDefaultAsync(cg => cg.Id == 1);
         }
 
+        // ---------------------------------------------------------
+        // LOGIC 1: REGISTER ATTEMPT (Handles Turn Validation)
+        // ---------------------------------------------------------
+        public async Task AddAttemptAsync(int profileId)
+        {
+            var game = await GetCurrentGameEntityAsync();
+
+            if (game == null || !game.IsActive || !game.StartTime.HasValue)
+            {
+                throw new InvalidOperationException("No active game found.");
+            }
+
+            // 1. Validation: Is player part of this game?
+            if (profileId != game.Player1Id && profileId != game.Player2Id)
+            {
+                throw new InvalidOperationException("Player is not in the current game.");
+            }
+
+            // 2. Turn Logic: Find the ABSOLUTE last attempt in this game
+            var lastAttempt = await _context.ShotAttempts
+                .Where(a => a.AttemptedAt >= game.StartTime.Value)
+                .OrderByDescending(a => a.AttemptedAt)
+                .FirstOrDefaultAsync();
+
+            // 3. If the last person to shoot was ME, deny the shot.
+            if (lastAttempt != null && lastAttempt.ProfileId == profileId)
+            {
+                throw new InvalidOperationException("It is the other player's turn.");
+            }
+
+            // 4. Create the Attempt
+            var attempt = new ShotAttempt
+            {
+                ProfileId = profileId,
+                AttemptedAt = DateTime.UtcNow
+            };
+
+            await _context.ShotAttempts.AddAsync(attempt);
+            await _context.SaveChangesAsync();
+        }
+
+        // ---------------------------------------------------------
+        // LOGIC 2: REGISTER SCORE (Connects to existing Attempt)
+        // ---------------------------------------------------------
+        public async Task AddScoreAsync(int profileId)
+        {
+            var game = await GetCurrentGameEntityAsync();
+
+            if (game == null || !game.IsActive || !game.StartTime.HasValue)
+            {
+                throw new InvalidOperationException("No active game found.");
+            }
+
+            // 1. Find the most recent attempt by THIS player
+            // We look back 15 seconds max to ensure we don't count an old attempt
+            var cutoffTime = DateTime.UtcNow.AddSeconds(-15);
+
+            var recentAttempt = await _context.ShotAttempts
+                .Where(a => a.ProfileId == profileId
+                            && a.AttemptedAt >= game.StartTime.Value
+                            && a.AttemptedAt >= cutoffTime)
+                .OrderByDescending(a => a.AttemptedAt)
+                .FirstOrDefaultAsync();
+
+            if (recentAttempt == null)
+            {
+                // Edge Case: The Pi sent a Goal signal, but the Attempt signal failed or timed out.
+                // OPTION A: Throw error (Strict Mode)
+                throw new InvalidOperationException("No recent shot attempt found. Goal rejected.");
+
+                // OPTION B: Auto-create attempt (Forgiving Mode) - Uncomment if you prefer this
+                /* 
+                   await AddAttemptAsync(profileId); 
+                */
+            }
+
+            // 2. Add the Score
+            var score = new Score
+            {
+                ProfileId = profileId,
+                ScoredAt = DateTime.UtcNow
+            };
+
+            await _context.Scores.AddAsync(score);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task UpdateTiebreakStatusAsync(int p1Id, int p2Id)
         {
-            var game = await _context.CurrentGame
-                .FirstOrDefaultAsync(cg => cg.Id == 1);
+            var game = await _context.CurrentGame.FirstOrDefaultAsync(cg => cg.Id == 1);
 
             if (game != null && game.Player1Id == p1Id && game.Player2Id == p2Id)
             {
