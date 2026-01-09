@@ -172,7 +172,7 @@ createApp({
         },
 
         async deleteProfileFromView() {
-            if(!this.viewingProfile) return;
+            if (!this.viewingProfile) return;
             await this.deleteProfile(this.viewingProfile.id);
             this.viewingProfile = null;
         },
@@ -209,7 +209,7 @@ createApp({
                 if (isActive) {
                     this.gameActive = true;
                     const winId = d.currentWinnerId ?? d.CurrentWinnerId;
-                    
+
                     if (winId) {
                         // WINNER FOUND! 
                         // We rely entirely on the API/Python script to tell us this.
@@ -241,7 +241,7 @@ createApp({
                     params: { t: Date.now() }
                 });
 
-                if (this.IsProcessingAction) return; 
+                if (this.IsProcessingAction) return;
 
                 this.liveStats = res.data;
 
@@ -250,12 +250,12 @@ createApp({
                 const p2 = this.p2Data;
 
                 // Kun i normal fase (ikke tiebreak) og hvis vi ikke allerede HAR en vinder
-                if (p1.visualScore >= 5 && p2.visualScore < 5) {
+                if (p1.visualScore >= 1 && p2.visualScore < 1) {
                     if (p1.attempts === p2.attempts) {
                         await this.autoDeclareWinner('p1');
                     }
                 }
-                else if (p2.visualScore >= 5 && p1.visualScore < 5) {
+                else if (p2.visualScore >= 1 && p1.visualScore < 1) {
                     if (p2.attempts === p1.attempts) {
                         await this.autoDeclareWinner('p2');
                     }
@@ -268,12 +268,12 @@ createApp({
         async finishGame() {
             try {
                 // "RECORD RESULT" button triggers this
-                if(this.winner) {
-                     await axios.post(`${this.apiUrl}/game/finish`, {
+                if (this.winner) {
+                    await axios.post(`${this.apiUrl}/game/finish`, {
                         winnerId: this.winner.id
                     });
                 } else {
-                     await axios.post(`${this.apiUrl}/game/stop`);
+                    await axios.post(`${this.apiUrl}/game/stop`);
                 }
             } catch (e) {
                 console.error("Fejl i finishGame:", e);
@@ -349,7 +349,7 @@ createApp({
         isLeader(data) {
             if (data.visualScore == null) return false;
             return data.visualScore >= (this.p1Data.visualScore || 0) &&
-                   data.visualScore >= (this.p2Data.visualScore || 0);
+                data.visualScore >= (this.p2Data.visualScore || 0);
         },
 
         // --- MANUAL CONTROLS (Only for fallback/testing) ---
@@ -393,6 +393,22 @@ createApp({
                 await this.checkStatus(true);
             } catch (e) {
                 alert("Kunne ikke declare winner");
+            }
+        },
+
+        async autoDeclareWinner(side) {
+            if (!this.gameActive || this.winner || this.IsProcessingAction) return;
+
+            const player = side === 'p1' ? this.p1Data : this.p2Data;
+            if (!player?.id) return;
+
+            this.IsProcessingAction = true;
+            try {
+                await axios.post(`${this.apiUrl}/game/declare_winner`, {
+                    winnerId: player.id
+                });
+            } finally {
+                this.IsProcessingAction = false;
             }
         },
 
