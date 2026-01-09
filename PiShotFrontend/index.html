@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +12,7 @@
     <!-- AXIOS -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
+
 <body>
     <div id="app" v-cloak>
         <div class="app-wrapper">
@@ -31,7 +33,7 @@
 
             <main>
                 <transition name="fade" mode="out-in">
-                    
+
                     <!-- LOBBY -->
                     <div v-if="currentView === 'lobby' && !gameActive" class="view-container">
                         <div class="card match-setup-card">
@@ -160,11 +162,11 @@
 
                     <!-- LIVE GAME VIEW -->
                     <div v-else-if="gameActive" class="view-container game-view">
-                        <div class="live-badge">● LIVE MATCH – FIRST TO 5</div>
+                        <div class="live-badge">● LIVE MATCH – FIRST TO 1</div>
                         <div v-if="isTiebreak" class="tiebreak-alert">
                             SUDDEN DEATH: ONE SHOT EACH
                         </div>
-                        
+
                         <div v-if="winner" class="winner-modal">
                             <div class="modal-content">
                                 <div class="trophy-anim">🏆</div>
@@ -177,7 +179,8 @@
                         </div>
 
                         <div class="scoreboard-grid">
-                            <div class="score-card p1" :class="{leading: isLeader(p1Data)}">
+                            <div class="score-card p1"
+                                :class="{ 'turn-active': isPlayer1Turn, 'turn-inactive': !isPlayer1Turn }">
                                 <img :src="p1Data.profileImage" class="avatar-game">
                                 <h2>{{p1Data.name}}</h2>
                                 <div class="score-digit">{{p1Data.visualScore}}</div>
@@ -188,7 +191,8 @@
                                 </div>
                             </div>
                             <div class="vs-badge">VS</div>
-                            <div class="score-card p2" :class="{leading: isLeader(p2Data)}">
+                            <div class="score-card p2"
+                                :class="{ 'turn-active': !isPlayer1Turn, 'turn-inactive': isPlayer1Turn }">
                                 <img :src="p2Data.profileImage" class="avatar-game">
                                 <h2>{{p2Data.name}}</h2>
                                 <div class="score-digit">{{p2Data.visualScore}}</div>
@@ -200,24 +204,28 @@
                             </div>
                         </div>
 
-                        <!-- LIVE CONTROL PANEL (tidligere Dev Tools) -->
+                        <!-- LIVE CONTROL PANEL (tidligere Dev Tools) 
                         <div class="card game-controls-card">
                             <h3>LIVE CONTROL PANEL</h3>
                             <p class="sub-text">
-                                Første til 5 mål vinder. Ved 5–5 går kampen i sudden death: hver spiller får ét skud pr. runde. 
+                                Første til 1 mål vinder. Ved 1–1 går kampen i sudden death: hver spiller får ét skud pr.
+                                runde.
                                 Hvis kun én scorer i en runde, kan du erklære vinderen her.
                             </p>
                             <div class="control-grid">
-                                <div class="control-column" :class="{ 'turn-active': isPlayer1Turn, 'turn-inactive': !isPlayer1Turn }">
+                                <div class="control-column"
+                                    :class="{ 'turn-active': isPlayer1Turn, 'turn-inactive': !isPlayer1Turn }">
                                     <h4>
                                         {{p1Data.name || 'Player 1'}}
                                         <span v-if="isPlayer1Turn" class="turn-badge">YOUR TURN</span>
                                     </h4>
                                     <div class="control-btn-row">
-                                        <button class="btn-small" @click="addAttempt('p1')" :disable="IsProcessingAction || IsProcessingAction">
+                                        <button class="btn-small" @click="addAttempt('p1')"
+                                            :disable="IsProcessingAction || IsProcessingAction">
                                             <i class="fas fa-bullseye"></i> Shot Attempt
                                         </button>
-                                        <button class="btn-small" @click="addScore('p1')" :disable="IsProcessingAction || IsProcessingAction">
+                                        <button class="btn-small" @click="addScore('p1')"
+                                            :disable="IsProcessingAction || IsProcessingAction">
                                             <i class="fas fa-futbol"></i> Goal
                                         </button>
                                     </div>
@@ -226,16 +234,19 @@
                                     </button>
                                 </div>
 
-                                <div class="control-column" :class="{ 'turn-active': !isPlayer1Turn, 'turn-inactive': isPlayer1Turn }">
+                                <div class="control-column"
+                                    :class="{ 'turn-active': !isPlayer1Turn, 'turn-inactive': isPlayer1Turn }">
                                     <h4>
                                         {{p2Data.name || 'Player 2'}}
                                         <span v-if="!isPlayer1Turn" class="turn-badge">YOUR TURN</span>
                                     </h4>
                                     <div class="control-btn-row">
-                                        <button class="btn-small" @click="addAttempt('p2')" :disable="!isPlayer1Turn || IsProcessingAction">
+                                        <button class="btn-small" @click="addAttempt('p2')"
+                                            :disable="!isPlayer1Turn || IsProcessingAction">
                                             <i class="fas fa-bullseye"></i> Shot Attempt
                                         </button>
-                                        <button class="btn-small" @click="addScore('p2')" :disable="isPlayer1Turn || IsProcessingAction">
+                                        <button class="btn-small" @click="addScore('p2')"
+                                            :disable="isPlayer1Turn || IsProcessingAction">
                                             <i class="fas fa-futbol"></i> Goal
                                         </button>
                                     </div>
@@ -250,6 +261,7 @@
                                 </button>
                             </div>
                         </div>
+                    -->
                     </div>
                 </transition>
             </main>
@@ -258,16 +270,16 @@
                 <div v-if="viewingProfile" class="modal-overlay" @click.self="viewingProfile = null">
                     <div class="modal-box view-modal-size">
                         <!-- Header -->
-                         <div class="view-header">
+                        <div class="view-header">
                             <img :src="viewingProfile.profileImage" class="avatar-large">
                             <div>
                                 <h2>{{viewingProfile.name}}</h2>
                                 <span class="rank-tag">Rank #{{viewingProfile.rank}}</span>
                             </div>
-                         </div>
+                        </div>
 
-                         <!-- Detailed Stats Grid -->
-                         <div class="stats-detail-grid">
+                        <!-- Detailed Stats Grid -->
+                        <div class="stats-detail-grid">
                             <div class="stat-box">
                                 <span class="lbl">Wins</span>
                                 <span class="val text-success">{{viewingProfile.wins}}</span>
@@ -292,19 +304,19 @@
                                 <span class="lbl">Accuracy</span>
                                 <span class="val">{{viewingProfile.accuracy}}%</span>
                             </div>
-                         </div>
+                        </div>
 
-                         <!-- Actions (Edit / Delete) -->
-                          <div class="modal-actions border-top">
+                        <!-- Actions (Edit / Delete) -->
+                        <div class="modal-actions border-top">
                             <button class="btn-outline" @click="openEditFromView">
                                 <i class="fas fa-pen"></i> Edit Profile
                             </button>
                             <button class="btn-danger" @click="deleteProfileFromView(viewingProfile.id)">
                                 <i class="fas fa-trash"></i> Delete
                             </button>
-                          </div>
+                        </div>
 
-                          <button class="btn-close-text" @click="viewingProfile = null">Close</button>
+                        <button class="btn-close-text" @click="viewingProfile = null">Close</button>
                     </div>
                 </div>
             </transition>
@@ -335,4 +347,5 @@
     <!-- Vores app-logik -->
     <script src="apps.js"></script>
 </body>
+
 </html>
